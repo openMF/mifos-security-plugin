@@ -13,7 +13,7 @@ public class ZitadelSecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/test2","/api/test3", "/auth/test").permitAll()
+                        .requestMatchers("/token", "userdetails").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
