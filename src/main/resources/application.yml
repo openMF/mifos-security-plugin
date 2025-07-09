@@ -29,14 +29,21 @@ logging:
         web: info
         security: debug
 zitadel:
-  url_front: 'https://3kmbjvc5-4200.usw3.devtunnels.ms'
-  client_id: "Asistente"
-  client_secret: "klug5LQYdGAHJuGPa5wFfQMN2d0fvjyAo6Q4hQJQctgcXS4q50qqolWHb54eUE1R"
+  url:
+    front: 'http://localhost:4200'
+    user: "https://plugin-auth-ofrdfj.us1.zitadel.cloud/management/v1/users/human"
+    token: "https://plugin-auth-ofrdfj.us1.zitadel.cloud/oauth/v2/token"
   scope: "openid profile email urn:zitadel:iam:org:project:id:zitadel:aud"
-  urltoken: "https://plugin-auth-ofrdfj.us1.zitadel.cloud/oauth/v2/token"
-  urluser: "https://plugin-auth-ofrdfj.us1.zitadel.cloud/management/v1/users/human"
-  proyect_id: "320736469398325498"
-  proyect_grand_id: "320771922155544476"
+  proyect:
+    proyect_id: "320736469398325498"
+    proyect_grand_id: "320771922155544476"
+  user-service:
+    client_id: "Asistente"
+    client_secret: "klug5LQYdGAHJuGPa5wFfQMN2d0fvjyAo6Q4hQJQctgcXS4q50qqolWHb54eUE1R"
+  web-app:
+    client_id: "321191693166683125"
+  api-app:
+    project_id: "320912215601386953"
 
 zitadel2:
   scope: 'urn:zitadel:iam:org:project:id:320736469398325498:role:project.owner'

@@ -34,7 +34,7 @@ public class ApiServiceImp implements ApiService {
     @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
     private String uri;
 
-    @Value("${zitadel.url.front}")
+    @Value("${zitadel.url_front}")
     private String url;
 
     @Value("${zitadel.web-app.client_id}")
