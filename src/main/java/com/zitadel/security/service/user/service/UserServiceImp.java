@@ -39,14 +39,14 @@ public class UserServiceImp implements UserService {
     @Autowired
     AppUserService appUserService;
 
-    @Value("${zitadel.proyect_id}")
+    @Value("${zitadel.proyect.proyect_id}")
     private String proyectId;
 
-    @Value("${zitadel.urltoken}")
+    @Value("${zitadel.url.token}")
     private String tokenUrl;
 
 
-    @Value("${zitadel.urluser}")
+    @Value("${zitadel.url.user}")
     private String urlUser;
 
 
@@ -54,13 +54,13 @@ public class UserServiceImp implements UserService {
     private String scopetoken;
 
 
-    @Value("${zitadel.client_id}")
+    @Value("${zitadel.user-service.client_id}")
     private String clientId;
 
-    @Value("${zitadel.client_secret}")
+    @Value("${zitadel.user-service.client_secret}")
     private String client_secret;
 
-    @Value("${zitadel.proyect_grand_id}")
+    @Value("${zitadel.proyect.proyect_grand_id}")
     private String projectGrantId;
 
 
