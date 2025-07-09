@@ -21,14 +21,12 @@ public class RolesServiceImp implements RolesService {
     @Autowired
     private UserService userService;
 
-    @Value("${zitadel.proyect_id}")
+    @Value("${zitadel.proyect.proyect_id}")
     private String proyectId;
 
     @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
     private String uri;
-
-
-
+    
     @Override
     public ResponseEntity<ApiResponse<Object>> getRoles() {
         try {

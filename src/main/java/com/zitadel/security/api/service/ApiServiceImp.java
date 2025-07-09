@@ -34,8 +34,14 @@ public class ApiServiceImp implements ApiService {
     @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
     private String uri;
 
-    @Value("${zitadel.url_front}")
+    @Value("${zitadel.url.front}")
     private String url;
+
+    @Value("${zitadel.web-app.client_id}")
+    private String CLIENT_ID;
+
+    @Value("${zitadel.api-app.project_id}")
+    private String PROJECT_ID;
 
     @Override
     public ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload) {
@@ -83,7 +89,7 @@ public class ApiServiceImp implements ApiService {
             String requestBody = "grant_type=authorization_code"
                     + "&code=" + code
                     + "&redirect_uri="+url+"/callback"
-                    + "&client_id=321191693166683125"
+                    + "&client_id=" + CLIENT_ID
                     + "&grant_type=refresh_token expires_in_refresh_token"
                     + "&code_verifier=" + codeVerifier;
 
@@ -125,7 +131,7 @@ public class ApiServiceImp implements ApiService {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(500, "asd", null));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(500, "asdgvhvh", null));
             }
 
             ObjectMapper objectMapper = new ObjectMapper();
@@ -143,7 +149,7 @@ public class ApiServiceImp implements ApiService {
             userDetails.setUsername(userInfo.get("name").toString());
             userDetails.setUserId(Long.parseLong(userInfo.get("sub").toString()));
 
-            userDetails.setBase64EncodedAuthenticationKey("bWlmb3M6cGFzc3dvcmQ");
+            //userDetails.setBase64EncodedAuthenticationKey("bWlmb3M6cGFzc3dvcmQ");
             userDetails.setAuthenticated(true);
             userDetails.setOfficeId(1);
             userDetails.setOfficeName("office_name");
@@ -162,7 +168,7 @@ public class ApiServiceImp implements ApiService {
     @Override
     public ResponseEntity<String> getProjectRoles() {
         String token = getAccessTokenFromSecurityContext();
-        String roles = getRolesFromZitadel(token, "320912215601386953");
+        String roles = getRolesFromZitadel(token, PROJECT_ID);
         return ResponseEntity.ok(roles);
     }
 

@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class Controlador {
 
-    @GetMapping("test")
+    @GetMapping("/test")
     public ResponseEntity<Object> test() {
         return ResponseEntity.ok().body("test");
     }
 
-    @GetMapping("test2")
+    @GetMapping("/test2")
     public ResponseEntity<Object> test2() {
         return ResponseEntity.ok().body("test2");
     }

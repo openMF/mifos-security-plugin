@@ -1,5 +1,6 @@
 package com.zitadel.security.service.apiResponse;
 
+
 import lombok.Data;
 
 @Data

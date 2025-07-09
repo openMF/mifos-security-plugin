@@ -18,8 +18,11 @@ public class TokenServiceImp implements TokenService {
     @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
     private String uri;
 
-    @Value("${zitadel.url_front}")
+    @Value("${zitadel.url.front}")
     private String url;
+
+    @Value("${zitadel.web-app.client_id}")
+    private String CLIENT_ID;
 
     @Override
     public ResponseEntity<?> getToken(Map<String, String> payload) {
@@ -31,7 +34,7 @@ public class TokenServiceImp implements TokenService {
             String requestBody = "grant_type=authorization_code"
                     + "&code=" + code
                     + "&redirect_uri="+url+"/callback"
-                    + "&client_id=321191693166683125"
+                    + "&client_id=" +  CLIENT_ID
                     + "&grant_type=refresh_token expires_in_refresh_token"
                     + "&code_verifier=" + codeVerifier;
 

@@ -25,7 +25,7 @@ public class PermissionService {
         String inSql = String.join(",", Collections.nCopies(roleIds.size(), "?"));
         String sql = """
         SELECT *
-        FROM m_role mr
+        FROM fineract_default.m_role mr
         WHERE mr.id IN (%s)
         """.formatted(inSql);
 
@@ -50,8 +50,8 @@ public class PermissionService {
         String inSql = String.join(",", Collections.nCopies(roleIds.size(), "?"));
         String sql = """
             SELECT p.code
-            FROM m_role_permission rp
-            JOIN m_permission p ON rp.permission_id = p.id
+            FROM fineract_default.m_role_permission rp
+            JOIN fineract_default.m_permission p ON rp.permission_id = p.id
             WHERE rp.role_id IN (%s)
         """.formatted(inSql);
         return jdbcTemplate.query(
