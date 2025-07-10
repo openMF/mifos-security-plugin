@@ -8,8 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Service
@@ -18,7 +20,7 @@ public class TokenServiceImp implements TokenService {
     @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
     private String uri;
 
-    @Value("${zitadel.url_front}")
+    @Value("${zitadel.url.front}")
     private String url;
 
     @Value("${zitadel.web-app.client_id}")
@@ -32,11 +34,12 @@ public class TokenServiceImp implements TokenService {
 
             HttpClient client = HttpClient.newHttpClient();
             String requestBody = "grant_type=authorization_code"
-                    + "&code=" + code
-                    + "&redirect_uri="+url+"/callback"
-                    + "&client_id=" +  CLIENT_ID
-                    + "&grant_type=refresh_token expires_in_refresh_token"
-                    + "&code_verifier=" + codeVerifier;
+                    + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
+                    + "&redirect_uri=" + URLEncoder.encode(url + "/callback", StandardCharsets.UTF_8)
+                    + "&client_id=" + URLEncoder.encode(CLIENT_ID, StandardCharsets.UTF_8)
+                    + "&code_verifier=" + URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8)
+                    + "&scope=" + URLEncoder.encode("openid profile email offline_access urn:zitadel:iam:org:project:320736469398325498:roles", StandardCharsets.UTF_8);
+
 
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                     .uri(URI.create(uri+"/oauth/v2/token"))

@@ -4,6 +4,8 @@ import com.zitadel.security.zitadel.CustomAuthorityOpaqueTokenIntrospector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
@@ -16,6 +18,7 @@ import java.util.List;
 
 
 @Configuration
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class ZitadelSecurityConfig {
 
     @Bean
@@ -24,7 +27,7 @@ public class ZitadelSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/test", "/token", "/userdetails",
+                                "/auth/test", "/token2", "/userdetails",
                                 "/actuator/info", "/actuator/info"
                         ).permitAll()
                         .anyRequest().authenticated()

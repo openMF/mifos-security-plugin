@@ -15,8 +15,10 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +36,7 @@ public class ApiServiceImp implements ApiService {
     @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
     private String uri;
 
-    @Value("${zitadel.url_front}")
+    @Value("${zitadel.url.front}")
     private String url;
 
     @Value("${zitadel.web-app.client_id}")
@@ -85,22 +87,30 @@ public class ApiServiceImp implements ApiService {
             String code = payload.get("code");
             String codeVerifier = payload.get("code_verifier");
 
-            HttpClient client = HttpClient.newHttpClient();
+            // Construir cuerpo correctamente
             String requestBody = "grant_type=authorization_code"
-                    + "&code=" + code
-                    + "&redirect_uri="+url+"/callback"
-                    + "&client_id=" + CLIENT_ID
-                    + "&grant_type=refresh_token expires_in_refresh_token"
-                    + "&code_verifier=" + codeVerifier;
+                    + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
+                    + "&redirect_uri=" + URLEncoder.encode(url + "/callback", StandardCharsets.UTF_8)
+                    + "&client_id=" + URLEncoder.encode(CLIENT_ID, StandardCharsets.UTF_8)
+                    + "&code_verifier=" + URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8)
+                    + "&scope=" + URLEncoder.encode("openid profile email offline_access urn:zitadel:iam:org:project:321191693166617589:roles", StandardCharsets.UTF_8);
+
+            HttpClient client = HttpClient.newHttpClient();
 
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(URI.create(uri+"/oauth/v2/token"))
+                    .uri(URI.create(uri + "/oauth/v2/token"))  // Asegúrate que `uri` sea tu dominio: https://plugin-auth-ofrdfj.us1.zitadel.cloud
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
+            // Validar el código HTTP
+            if (response.statusCode() != 200) {
+                return ResponseEntity.status(response.statusCode()).body("Error de autenticación: " + response.body());
+            }
+
+            // Convertir JSON a Map
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> tokenData = mapper.readValue(response.body(), new TypeReference<>() {});
 
@@ -110,6 +120,7 @@ public class ApiServiceImp implements ApiService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener el token");
         }
     }
+
 
     @Override
     public ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap) {
