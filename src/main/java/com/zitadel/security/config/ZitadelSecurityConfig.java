@@ -24,11 +24,12 @@ public class ZitadelSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/test", "/token2", "/userdetails",
-                                "/actuator/info", "/actuator/info"
+                                "/auth/test","/token2", "/userdetails",
+                                "/actuator/info", "/api/v1/configurations/name/enable-business-date"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
