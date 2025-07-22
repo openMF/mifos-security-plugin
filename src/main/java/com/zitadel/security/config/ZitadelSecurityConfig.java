@@ -28,8 +28,13 @@ public class ZitadelSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/test","/token2", "/userdetails",
-                                "/actuator/info", "/api/v1/configurations/name/enable-business-date"
+                                "/error",
+                                "/token2",
+                                "/token",
+                                "/userdetails",
+                                "/DTO-token"
+                               // "/actuator/**",
+                               // "/fineract-provider/actuator/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -37,6 +42,7 @@ public class ZitadelSecurityConfig {
 
         return http.build();
     }
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

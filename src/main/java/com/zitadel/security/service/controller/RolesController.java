@@ -27,14 +27,16 @@ public class RolesController {
         return rolesService.createRol(data);
     }
 
-    @DeleteMapping("/{roleKey}")
-    public ResponseEntity<ApiResponse<Object>> deleteRol(@PathVariable String roleKey) {
-        return rolesService.deleteRol(roleKey);
+    @DeleteMapping("")
+    public ResponseEntity<ApiResponse<Object>> deleteRol( @RequestBody RoleRequest data) {
+        String id= data.getRoleKey();
+        return rolesService.deleteRol(id);
     }
 
-    @PutMapping("/{roleKey}")
-    public ResponseEntity<ApiResponse<Object>> updateRol(@PathVariable String roleKey, @RequestBody RoleRequest data) {
-        return rolesService.updateRol(roleKey, data);
+    @PutMapping("")
+    public ResponseEntity<ApiResponse<Object>> updateRol( @RequestBody RoleRequest data) {
+        String id= data.getRoleKey();
+        return rolesService.updateRol(id, data);
     }
 
 }

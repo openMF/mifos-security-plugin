@@ -32,7 +32,7 @@ class ApiController {
         return apiService.userDetails(tokenMap);
     }
 
-    @PostMapping("/api/DTO-token")
+    @PostMapping("/DTO-token")
     public ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(@RequestBody Map<String, Object> tokenPayload) {
         return apiService.mapToken(tokenPayload);
     }

@@ -45,6 +45,7 @@ public class ApiServiceImp implements ApiService {
     @Value("${zitadel.api-app.project_id}")
     private String PROJECT_ID;
 
+
     @Override
     public ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload) {
 
