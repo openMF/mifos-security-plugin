@@ -29,13 +29,13 @@ public class AppUserService {
     ) {
 
         String insertUserSql = """
-            INSERT INTO m_appuser (id,office_id,staff_id,username,firstname,lastname,password,email,firsttime_login_remaining,nonexpired,nonlocked,nonexpired_credentials,enabled) 
+            INSERT INTO fineract_default.m_appuser (id,office_id,staff_id,username,firstname,lastname,password,email,firsttime_login_remaining,nonexpired,nonlocked,nonexpired_credentials,enabled) 
             VALUES (?,?,?,?,?,?,'','',1,1,1,1,1)
         """;
         jdbcTemplate.update(insertUserSql, id, officeId, staffId, username, firstname, lastname);
 
         String insertRoleSql =  """
-               INSERT INTO m_appuser_role (appuser_id, role_id)
+               INSERT INTO fineract_default.m_appuser_role (appuser_id, role_id)
                VALUES (?, ?)
             """;
         for (String roleId : roleIds) {
@@ -56,9 +56,9 @@ public class AppUserService {
             r.id AS role_id,
             r.name AS role_name,
             r.description AS role_description
-        FROM m_appuser u
-        LEFT JOIN m_appuser_role ur ON u.id = ur.appuser_id
-        LEFT JOIN m_role r ON ur.role_id = r.id
+        FROM fineract_default.m_appuser u
+        LEFT JOIN fineract_default.m_appuser_role ur ON u.id = ur.appuser_id
+        LEFT JOIN fineract_default.m_role r ON ur.role_id = r.id
         WHERE u.id = ?
     """;
 
@@ -99,7 +99,7 @@ public class AppUserService {
             String lastname
     ) {
         String sql = """
-        UPDATE m_appuser
+        UPDATE fineract_default.m_appuser
         SET username = ?,
             firstname = ?,
             lastname = ?
@@ -116,13 +116,13 @@ public class AppUserService {
     public void eliminarUsuarioConRoles(String id) {
 
         String deleteRolesSql = """
-        DELETE FROM m_appuser_role
+        DELETE FROM fineract_default.m_appuser_role
         WHERE appuser_id = ?
     """;
         jdbcTemplate.update(deleteRolesSql, id);
 
         String deleteUserSql = """
-        DELETE FROM m_appuser
+        DELETE FROM fineract_default.m_appuser
         WHERE id = ?
     """;
         int filasAfectadas = jdbcTemplate.update(deleteUserSql, id);
@@ -137,14 +137,14 @@ public class AppUserService {
         List<String> nuevosRoles = data.getRoleKeys();
 
         String deleteSql = """
-        DELETE FROM m_appuser_role
+        DELETE FROM fineract_default.m_appuser_role
         WHERE appuser_id = ?
     """;
         jdbcTemplate.update(deleteSql, userId);
 
         if (nuevosRoles != null && !nuevosRoles.isEmpty()) {
             String insertSql = """
-            INSERT INTO m_appuser_role (appuser_id, role_id)
+            INSERT INTO fineract_default.m_appuser_role (appuser_id, role_id)
             VALUES (?, ?)
         """;
             for (String roleId : nuevosRoles) {
@@ -155,7 +155,7 @@ public class AppUserService {
 
     public void actualizarOficinaYStaff(OfficeUpdateRequest data) {
         String sql = """
-        UPDATE m_appuser
+        UPDATE fineract_default.m_appuser
         SET office_id = ?, staff_id = ?
         WHERE id = ?
     """;

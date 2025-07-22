@@ -1,5 +1,6 @@
 package com.zitadel.security.service.user.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zitadel.security.api.dto.UserDetailsDTO;
 import com.zitadel.security.service.apiResponse.ApiResponse;
 import com.zitadel.security.service.apiResponse.ApiResponsePass;
 import com.zitadel.security.service.user.dto.*;
@@ -45,10 +46,12 @@ public class UserController {
         return "Datos recibidos";
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(@PathVariable String id) {
-        return userService.getUser(id);
+    @PostMapping("")
+    public ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(@RequestBody UserIdRequest dto) {
+        System.out.println("User ID: " + dto.getUserId());
+        return userService.getUser(dto.getUserId());
     }
+
 
     @PutMapping("/update-user")
     public String updateUser(@RequestBody UpdateUserRequest request) {
@@ -66,19 +69,20 @@ public class UserController {
     }
 
     @DeleteMapping("/")
-    public ResponseEntity<ApiResponse<Object>> deleteUser(@RequestParam Long userId) {
-        return userService.deleteUser(userId);
+    public ResponseEntity<ApiResponse<Object>> deleteUser(@RequestBody UserIdRequest request) {
+        return userService.deleteUser(Long.parseLong(request.getUserId()));
     }
 
     @PutMapping("/desactivate")
-    public ResponseEntity<ApiResponse<Object>> desactivateUser(@RequestParam Long userId) {
-        return userService.desactivate(userId);
+    public ResponseEntity<ApiResponse<Object>> desactivateUser(@RequestBody UserIdRequest request) {
+        return userService.desactivate(Long.valueOf(request.getUserId()));
     }
 
     @PutMapping("/reactivate")
-    public ResponseEntity<ApiResponse<Object>> reactivateUser(@RequestParam Long userId) {
-        return userService.reactivate(userId);
+    public ResponseEntity<ApiResponse<Object>> reactivateUser(@RequestBody UserIdRequest request) {
+        return userService.reactivate(Long.valueOf(request.getUserId()));
     }
+
 
     @PostMapping("/assign-roles")
     public ResponseEntity<ApiResponse<Object>> assignRolesToUser(@RequestBody RoleGrantRequest data) {
@@ -101,8 +105,9 @@ public class UserController {
         return userService.createUserBD(request);
     }
 
-    @GetMapping("/dataUserBD/{userId}")
-    public ResponseEntity<ApiResponse<Object>> getDatosExtraUsuario(@PathVariable String userId) {
-        return userService.getDatosExtraUsuario(userId);
+    @PostMapping("/dataUserBD")
+    public ResponseEntity<ApiResponse<Object>> getDatosExtraUsuario(@RequestBody UserIdRequest request) {
+        return userService.getDatosExtraUsuario(request.getUserId());
     }
+
 }
