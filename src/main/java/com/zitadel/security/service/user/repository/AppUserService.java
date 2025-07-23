@@ -29,10 +29,10 @@ public class AppUserService {
     ) {
 
         String insertUserSql = """
-            INSERT INTO fineract_default.m_appuser (id,office_id,staff_id,username,firstname,lastname,password,email,firsttime_login_remaining,nonexpired,nonlocked,nonexpired_credentials,enabled) 
-            VALUES (?,?,?,?,?,?,'','',1,1,1,1,1)
+            INSERT INTO fineract_default.m_appuser (id,office_id,staff_id,username,username_zitadel,firstname,lastname,password,email,firsttime_login_remaining,nonexpired,nonlocked,nonexpired_credentials,enabled) 
+            VALUES (?,?,?,?,?,?,?,'','',1,1,1,1,1)
         """;
-        jdbcTemplate.update(insertUserSql, id, officeId, staffId, username, firstname, lastname);
+        jdbcTemplate.update(insertUserSql, id, officeId, staffId, id, username, firstname, lastname);
 
         String insertRoleSql =  """
                INSERT INTO fineract_default.m_appuser_role (appuser_id, role_id)
@@ -50,7 +50,7 @@ public class AppUserService {
         SELECT
             u.office_id,
             u.staff_id,
-            u.username,
+            u.username_zitadel,
             u.firstname,
             u.lastname,
             r.id AS role_id,
@@ -100,7 +100,7 @@ public class AppUserService {
     ) {
         String sql = """
         UPDATE fineract_default.m_appuser
-        SET username = ?,
+        SET username_zitadel= ?,
             firstname = ?,
             lastname = ?
         WHERE id = ?
