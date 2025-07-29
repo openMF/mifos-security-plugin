@@ -73,7 +73,7 @@ public class AppUserService {
         Map<String, Object> resultado = new HashMap<>();
         resultado.put("officeId", primera.get("office_id"));
         resultado.put("staffId", primera.get("staff_id"));
-        resultado.put("username", primera.get("username"));
+        resultado.put("username", primera.get("username_zitadel"));
         resultado.put("firstname", primera.get("firstname"));
         resultado.put("lastname", primera.get("lastname"));
 
