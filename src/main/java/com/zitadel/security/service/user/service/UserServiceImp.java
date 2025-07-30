@@ -42,12 +42,9 @@ public class UserServiceImp implements UserService {
     @Value("${zitadel.proyect.proyect_id}")
     private String proyectId;
 
-    @Value("${zitadel.url.token}")
-    private String tokenUrl;
 
-
-    @Value("${zitadel.url.user}")
-    private String urlUser;
+    @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
+    private String url;
 
 
     @Value("${zitadel.scope}")
@@ -81,7 +78,7 @@ public class UserServiceImp implements UserService {
 
             RestTemplate restTemplate = new RestTemplate();
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(url.concat("/oauth/v2/token"), request, Map.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 Map<String, Object> responseBody = response.getBody();
@@ -150,7 +147,7 @@ public class UserServiceImp implements UserService {
             RequestBody body = RequestBody.create(json, okhttp3.MediaType.parse("application/json"));
 
             Request request = new Request.Builder()
-                    .url(urlUser)
+                    .url(url.concat("/management/v1/users/human"))
                     .post(body)
                     .addHeader("Authorization", "Bearer " + obtenerToken())
                     .addHeader("Content-Type", "application/json")

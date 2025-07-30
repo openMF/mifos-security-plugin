@@ -10,15 +10,26 @@ spring:
     oauth2:
       resourceserver:
         opaquetoken:
-          introspection-uri: 'https://plugin-auth-ofrdfj.us1.zitadel.cloud/oauth/v2/introspect'
-          uri: 'https://plugin-auth-ofrdfj.us1.zitadel.cloud'
-          client-id: '320912215601386953'
-          client-secret: 'Oi6WQvgYw5XwfACyH3DQWi0jkF47mzS7ZUFy83uODqrQEDAK0wXr41vSDxPT0OTu'
+          uri: 'https://plugin-auth-ofrdfj.us1.zitadel.cloud'                                   #URL provided by zitadel
+          client-id: '320912215601386953'                                                       #client id zitadel backend
+          client-secret: 'Oi6WQvgYw5XwfACyH3DQWi0jkF47mzS7ZUFy83uODqrQEDAK0wXr41vSDxPT0OTu'     #secret zitadel backend
   datasource:
     url: jdbc:mariadb://localhost:3306/fineract_default
-    username: root
+    username: root                                                                              #configuration of your database
     password: mysql
     driver-class-name: org.mariadb.jdbc.Driver
+zitadel:
+  url:
+    front: 'https://3kmbjvc5-4200.usw3.devtunnels.ms'                                     #url de frontend
+  scope: "openid profile email urn:zitadel:iam:org:project:id:zitadel:aud"
+  proyect:
+    proyect_id: "320736469398325498"                                                      #resource id
+    proyect_grand_id: "320771922155544476"                                                #grand id
+  user-service:
+    client_id: "Asistente"                                                                #name from  service user
+    client_secret: "klug5LQYdGAHJuGPa5wFfQMN2d0fvjyAo6Q4hQJQctgcXS4q50qqolWHb54eUE1R"     #secret from service user
+  web-app:
+    client_id: "321191693166683125"                                                       #frontend client id
 
 logging:
   level:
@@ -28,22 +39,3 @@ logging:
       springframework:
         web: info
         security: debug
-zitadel:
-  url:
-    front: 'https://3kmbjvc5-4200.usw3.devtunnels.ms'
-    user: "https://plugin-auth-ofrdfj.us1.zitadel.cloud/management/v1/users/human"
-    token: "https://plugin-auth-ofrdfj.us1.zitadel.cloud/oauth/v2/token"
-  scope: "openid profile email urn:zitadel:iam:org:project:id:zitadel:aud"
-  proyect:
-    proyect_id: "320736469398325498"
-    proyect_grand_id: "320771922155544476"
-  user-service:
-    client_id: "Asistente"
-    client_secret: "klug5LQYdGAHJuGPa5wFfQMN2d0fvjyAo6Q4hQJQctgcXS4q50qqolWHb54eUE1R"
-  web-app:
-    client_id: "321191693166683125"
-  api-app:
-    project_id: "320912215601386953"
-
-zitadel2:
-  scope: 'urn:zitadel:iam:org:project:id:320736469398325498:role:project.owner'

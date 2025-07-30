@@ -1,6 +1,7 @@
 package com.zitadel.security.config;
 
 import com.zitadel.security.zitadel.CustomAuthorityOpaqueTokenIntrospector;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -21,6 +22,9 @@ import java.util.List;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ZitadelSecurityConfig {
 
+    @Value("${zitadel.url.front}")
+    private String url_front;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -33,8 +37,6 @@ public class ZitadelSecurityConfig {
                                 "/token",
                                 "/userdetails",
                                 "/DTO-token"
-                               // "/actuator/**",
-                               // "/fineract-provider/actuator/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -47,8 +49,7 @@ public class ZitadelSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
-        config.setAllowedOrigins(List.of("https://3kmbjvc5-4200.usw3.devtunnels.ms"));
+        config.setAllowedOrigins(List.of(url_front));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

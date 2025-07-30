@@ -42,7 +42,7 @@ public class ApiServiceImp implements ApiService {
     @Value("${zitadel.web-app.client_id}")
     private String CLIENT_ID;
 
-    @Value("${zitadel.api-app.project_id}")
+    @Value("${spring.security.oauth2.resourceserver.opaquetoken.client-id}")
     private String PROJECT_ID;
 
 
