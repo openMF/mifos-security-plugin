@@ -10,26 +10,26 @@ spring:
     oauth2:
       resourceserver:
         opaquetoken:
-          uri: 'https://plugin-auth-ofrdfj.us1.zitadel.cloud'                                   #URL provided by zitadel
-          client-id: '320912215601386953'                                                       #client id zitadel backend
-          client-secret: 'Oi6WQvgYw5XwfACyH3DQWi0jkF47mzS7ZUFy83uODqrQEDAK0wXr41vSDxPT0OTu'     #secret zitadel backend
+          uri: ''                                   #URL provided by zitadel
+          client-id: ''                                                       #client id zitadel backend
+          client-secret: ''     #secret zitadel backend
   datasource:
     url: jdbc:mariadb://localhost:3306/fineract_default
-    username: root                                                                              #configuration of your database
+    username: root                                       #configuration of your database
     password: mysql
     driver-class-name: org.mariadb.jdbc.Driver
 zitadel:
   url:
-    front: 'https://3kmbjvc5-4200.usw3.devtunnels.ms'                                     #url de frontend
+    front: 'http://localhost:4200'                       #url de frontend
   scope: "openid profile email urn:zitadel:iam:org:project:id:zitadel:aud"
   proyect:
-    proyect_id: "320736469398325498"                                                      #resource id
-    proyect_grand_id: "320771922155544476"                                                #grand id
+    proyect_id: ""                                                      #resource id
+    proyect_grand_id: ""                                                #grand id
   user-service:
-    client_id: "Asistente"                                                                #name from  service user
-    client_secret: "klug5LQYdGAHJuGPa5wFfQMN2d0fvjyAo6Q4hQJQctgcXS4q50qqolWHb54eUE1R"     #secret from service user
+    client_id: ""                                                                #name from  service user
+    client_secret: ""     #secret from service user
   web-app:
-    client_id: "321191693166683125"                                                       #frontend client id
+    client_id: ""                                                       #frontend client id
 
 logging:
   level:

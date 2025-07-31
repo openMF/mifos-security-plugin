@@ -33,7 +33,7 @@ public class ZitadelSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/error",
-                                "/token2",
+                                "/tokenOIDC",
                                 "/token",
                                 "/userdetails",
                                 "/DTO-token"

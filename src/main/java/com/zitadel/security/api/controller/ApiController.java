@@ -42,7 +42,7 @@ class ApiController {
         return apiService.getProjectRoles();
     }
 
-    @PostMapping("/token2")
+    @PostMapping("/tokenOIDC")
     public ResponseEntity<?> getToken(@RequestBody Map<String, String> payload) {
         return apiService.getToken(payload);
     }
