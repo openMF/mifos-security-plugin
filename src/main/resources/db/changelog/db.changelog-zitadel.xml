@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <changeSet id="001-add-username-zitadel-column" author="luis">
+    <changeSet id="001-add-username-zitadel-column" author="pluginzitadel">
         <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="m_appuser" columnName="username_zitadel"/>
@@ -17,4 +17,45 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="002-insert-or-update-zitadel-user" author="pluginzitadel" context="data">
+        <sql>
+            INSERT INTO m_appuser (
+                id,is_deleted,office_id,username,username_zitadel,firstname,
+                lastname,password,email,firsttime_login_remaining,nonexpired,
+                nonlocked,nonexpired_credentials,enabled,last_time_password_updated,
+                password_never_expires,is_self_service_user,cannot_change_password
+            ) VALUES (
+                         ${appuserId},
+                         0,
+                         1,
+                         '${appuserId}',
+                         '${usernameZitadel}',
+                         '${firstname}',
+                         '${lastname}',
+                         '',
+                         '',
+                         1,
+                         1,
+                         1,
+                         1,
+                         1,
+                         '1970-01-01',
+                         0,
+                         0,
+                         0
+                     )
+                ON DUPLICATE KEY UPDATE
+                                     username_zitadel = VALUES(username_zitadel),
+                                     firstname = VALUES(firstname),
+                                     lastname = VALUES(lastname);
+        </sql>
+    </changeSet>
+
+    <changeSet id="003-assign-role-to-zitadel-user" author="pluginzitadel" context="data">
+        <sql>
+            INSERT INTO m_appuser_role (appuser_id, role_id)
+            VALUES (${appuserId}, 1)
+                ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
+        </sql>
+    </changeSet>
 </databaseChangeLog>
