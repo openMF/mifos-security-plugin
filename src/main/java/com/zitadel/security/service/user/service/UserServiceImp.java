@@ -1,3 +1,21 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.zitadel.security.service.user.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,12 +44,11 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import java.util.*;
 import java.util.stream.Collectors;
-
 @Slf4j
 @Service
 public class UserServiceImp implements UserService {
 
-    @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String uri;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -39,25 +56,25 @@ public class UserServiceImp implements UserService {
     @Autowired
     AppUserService appUserService;
 
-    @Value("${zitadel.proyect.proyect_id}")
+    @Value("${fineract.plugin.oidc.project.id}")
     private String proyectId;
 
 
-    @Value("${spring.security.oauth2.resourceserver.opaquetoken.uri}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String url;
 
 
-    @Value("${zitadel.scope}")
+    @Value("${fineract.plugin.oidc.scope}")
     private String scopetoken;
 
 
-    @Value("${zitadel.user-service.client_id}")
+    @Value("${fineract.plugin.oidc.service-user.client-id}")
     private String clientId;
 
-    @Value("${zitadel.user-service.client_secret}")
+    @Value("${fineract.plugin.oidc.service-user.client-secret}")
     private String client_secret;
 
-    @Value("${zitadel.proyect.proyect_grand_id}")
+    @Value("${fineract.plugin.oidc.project.grant-id}")
     private String projectGrantId;
 
 
