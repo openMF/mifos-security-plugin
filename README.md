@@ -2,17 +2,15 @@
 
 ## For Users
 
-
-
 1. [Download link for Mifos® Reporting Plugin ](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosSecurityPlugin/MifosSecurityPlugin-1.12.0.zip/download)  and extract the files (java jar files are on it)
 
-2a. Execute only for Docker® - Create a directory, copy the Mifos® Reporting Plugin and the Pentaho® libraries in it
+2. Option 1 - Execute only for Docker® - Create a directory, copy the Mifos® Reporting Plugin and the Pentaho® libraries in it
 
 ```bash
-    mkdir fineract-pentaho  && cd fineract-pentaho
+    mkdir mifos-security-plugin  && cd mifos-security-plugin
 ```
 
-2b. Execute only for Apache Tomcat® - Copy the Mifos® Reporting Plugin and Pentaho® libraries in $TOMCAT_HOME/webapps/fineract-provider/WEB-INF/lib/
+2.  Option 2 - Execute only for Apache Tomcat® - Copy the Mifos® Reporting Plugin and Pentaho® libraries in $TOMCAT_HOME/webapps/fineract-provider/WEB-INF/lib/
 
 3. Restart Docker® or Apache Tomcat®
 
