@@ -1,117 +1,109 @@
-#  Mifos® Security Plugin for Apache Fineract®
+# Mifos® Reporting Plugin for Apache Fineract®
 
-This plugin extends Apache Fineract® functionality by adding additional security controls, external authentication, custom validations, and more.
+## For Users
 
----
-
-##  For Users
-
-### 1. Clone or download Apache Fineract®
+1. Create a directory for the Mifos® reports and copy the PRPT files in it 
 
 ```bash
-git clone https://github.com/apache/fineract.git
-cd fineract
+    mkdir pentahoReports
 ```
 
-### 2. Generate the Fineract `.jar`
+2. Export the FINERACT_PENTAHO_REPORTS_PATH variable
 
 ```bash
-./gradlew bootJar
-```
+    export FINERACT_PENTAHO_REPORTS_PATH="$PWD/pentahoReports/"
+```    
 
-This will generate the `fineract-provider-<version>.jar` file in `fineract-provider/build/libs/`.
+3. [Download link for Mifos® Reporting Plugin ](https://sourceforge.net/projects/mifos/files/mifos-plugins/FineractPentahoPlugin/FineractPentahoPlugin-1.10.0.zip/download)  and extract the files (java jar files are on it)
 
----
-
-##  Installing the Security Plugin
-
-### 1. Clone the plugin repository
+4a. Execute only for Docker® - Create a directory, copy the Mifos® Reporting Plugin and the Pentaho® libraries in it
 
 ```bash
-git clone https://github.com/your-org/fineract-security-plugin.git
-cd fineract-security-plugin
+    mkdir fineract-pentaho  && cd fineract-pentaho
 ```
 
-### 2. Manually install Fineract `.jar` files into the local Maven repository
+4b. Execute only for Apache Tomcat® - Copy the Mifos® Reporting Plugin and Pentaho® libraries in $TOMCAT_HOME/webapps/fineract-provider/WEB-INF/lib/
 
-> Only if the plugin directly depends on Fineract classes and you're not using a remote repository.
+5. Restart Docker® or Apache Tomcat®
+
+6. Test the Mifos® reports.
+
+## For Developers
+
+This project is currently only tested against the very latest and greatest bleeding edge Apache Fineract® `develop` branch on Linux Ubuntu® 24.04LTS. 
+Building and using it against other Apache Fineract® versions may be possible, but is not tested or documented here.
+
+1. Download and compile
 
 ```bash
-mvn install:install-file \
-  -Dfile=/path/to/fineract/fineract-provider/build/libs/fineract-provider-1.13.1-SNAPSHOT.jar \
-  -DgroupId=org.apache.fineract \
-  -DartifactId=fineract-provider \
-  -Dversion=1.13.1-SNAPSHOT \
-  -Dpackaging=jar
-
-mvn install:install-file \
-  -Dfile=/path/to/fineract/fineract-core/build/libs/fineract-core-1.13.1-SNAPSHOT.jar \
-  -DgroupId=org.apache.fineract \
-  -DartifactId=fineract-core \
-  -Dversion=1.13.1-SNAPSHOT \
-  -Dpackaging=jar
+    git clone https://github.com/openMF/fineract-pentaho.git
+    cd mifos-reporting-plugin && ./mvnw -Dmaven.test.skip=true clean package && cd ..
 ```
-
->  Make sure to adjust the paths and versions according to your environment.
-
-### 3. Build the security plugin using Maven
+2. Export the Location of Mifos® reports (PRPT files) in the following variable
 
 ```bash
-mvn clean install
-```
+    export FINERACT_PENTAHO_REPORTS_PATH="$PWD/fineract-pentaho/pentahoReports/"
+```    
 
-This will generate the plugin `.jar` inside the `target/` directory, along with its dependencies in the `libs/` folder (if configured that way).
-
----
-
-##  Running the Plugin with Apache Fineract®
-
-1. Make sure the plugin `.jar` and its dependencies are placed in a directory (e.g., `/home/user/plugins/libs/`).
-
-2. Run Apache Fineract® while dynamically loading the plugin:
+3. Execute Apache Fineract® with the location of the Mifos® Reporting Plugin library
 
 ```bash
-java -Dloader.path=/home/user/plugins/libs/ \
-     -jar /path/to/fineract/fineract-provider/build/libs/fineract-provider-1.13.1-SNAPSHOT.jar \
-     --debug
+java -Dloader.path=$MIFOS_PENTAHO_PLUGIN_HOME/libs/ -jar $APACHE_FINERACT_HOME/fineract-provider.jar
 ```
 
->  If everything is correctly set up, the logs should indicate that the plugin was successfully loaded and registered.
-
----
-
-##  Verification
-
-You can test the plugin's features by calling a custom endpoint or reviewing changes in the existing security logic. For example:
+4. Test the Mifos® reports execution using the following curl example or through the Mifos Web App in the Reports Menu
 
 ```bash
-curl -k --location --request GET 'https://localhost:8443/fineract-provider/auth/test' \
---header 'Fineract-Platform-TenantId: default'
+    curl --location --request GET 'https://localhost:8443/fineract-provider/api/v1/runreports/Expected%20Payments%20By%20Date%20-%20Formatted?tenantIdentifier=default&locale=en&dateFormat=dd%20MMMM%20yyyy&R_startDate=01%20January%202022&R_endDate=02%20January%202023&R_officeId=1&output-type=PDF&R_loanOfficerId=-1' \
+--header 'Fineract-Platform-TenantId: default' \
+--header 'Authorization: Basic bWlmb3M6cGFzc3dvcmQ='
 ```
 
----
+5. The output must be a PDF with the Expected Payment By Date Formated information in it (maybe it could have blank or zeroes if it is a fresh Apache Fineract® setup)
 
-##  Requirements
+![alt text](https://github.com/openMF/fineract-pentaho/blob/1.8/img/screenshot_pentaho_report.png?raw=true)
 
-* Apache Fineract® 1.13.1+
-* Java 11 or later
-* Maven 3.6+
-* Gradle 7+ (to build Fineract)
-* Ubuntu 20.04/22.04/24.04 (recommended)
+The API call (above) should not fail if you follow the steps as shown, and all conditions met for the version of Apache Fineract®
 
----
+If the API call (above) [fails with](https://issues.apache.org/jira/browse/FINERACT-1173) 
+_`"There is no ReportingProcessService registered in the ReportingProcessServiceProvider for this report type: Pentaho"`_, 
+then this Pentaho® Plugin has not been correctly registered & loaded by Apache Fineract®.
 
-##  License
+Please note that the library will work using the latest Apache Fineract® development branch (30th December 2024), also make sure you got installed the type fonts required by the reports. This Mifos® Reporting Plugin will work only on Apache Tomcat® version 10+. 
 
-This project is licensed under the [Mozilla Public License 2.0 (MPL)](https://www.mozilla.org/en-US/MPL/2.0/).
+See also [`PentahoReportsTest`](src/test/java/org/mifos/fineract/pentaho/PentahoReportsTest.java) and the [`test`](test) script.
 
----
 
-##  Contributions
+## License
 
-Contributions are welcome! You can:
+This code used to be part of the Mifos® codebase before it became [Apache Fineract®](https://fineract.apache.org).
+During that move, the Pentaho® related code had to be removed, because Pentaho®'s license prevents code using it from being part of an Apache Software Foundation® hosted project.
 
-* Submit a pull request with improvements or fixes
-* Report bugs and suggestions via the Issues section
-* Share the plugin with other developers in the Fineract® ecosystem
+The correct technical solution to resolve such conundrums is to use a plugin architecture - which is what this is.
+
+Note that the code and report templates in this git repo itself are
+[licensed to you under the Mozilla® Public License 2.0 (MPL)](https://github.com/openMF/fineract-pentaho/blob/develop/LICENSE).
+This is a separate question than the license that Pentaho® itself (i.e. the JAR/s of Pentaho®) are made available under.
+
+## Important
+
+* Mifos® and Mifos® Reporting Plugin are not affiliated with, endorsed by, or otherwise associated with the Apache Software Foundation® (ASF) or any of its projects.
+* Apache Software Foundation® is a vendor-neutral organization and it is an important part of the brand is that Apache Software Foundation® (ASF) projects are governed independently.
+* Apache Fineract®, Fineract, Apache, the Apache® feather, and the Apache Fineract® project logo are either registered trademarks or trademarks of the Apache Software Foundation®.
+* Mifos® and Mifos® Reporting Plugin are not affiliated with, endorsed by, or otherwise associated with Hitachi Vantara LLC or any of its projects.
+* Hitachi® and Hitachi Vantara® are registered trademarks of Hitachi, Ltd. in the U.S. and other countries. Pentaho® is a registered trademark of Hitachi Vantara LLC in the U.S. and other countries.
+
+## Contribute
+
+If this Mifos® Reporting Plugin project is useful to you, please contribute back to it (and to Apache Fineract®) by raising Pull Requests yourself with any enhancements you make, and by helping to maintain this project by helping other users on Issues and reviewing PR from others (you will be promoted to committer on this project when you contribute).  
+We recommend that you _Watch_ and _Star_ this project on GitHub® to make it easy to get notified.
+
+## History
+
+This is a [Mifos® Reporting Plugin for Apache Fineract®](https://github.com/apache/fineract/blob/maintenance/1.6/fineract-doc/src/docs/en/deployment.adoc). The original work is this one https://github.com/vorburger/fineract-pentaho.
+
+See [TODO](TODO.md) for possible future follow-up enhancement work.
+
+The Mifos® Reporting Plugin has been updated to the Pentaho® version 9.5, please use the [`Pentaho® Report Designer version 9.5`](https://mifos.jfrog.io/artifactory/libs-snapshot-local/org/pentaho/reporting/prd-ce/9.5.0.0-SNAPSHOT/prd-ce-9.5.0.0-20230108.081758-1.zip) 
+
 
