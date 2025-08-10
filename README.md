@@ -2,15 +2,15 @@
 
 ## For Users
 
-1. [Download link for Mifos® Reporting Plugin ](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosSecurityPlugin/MifosSecurityPlugin-1.12.0.zip/download)  and extract the files (java jar files are on it)
+1. [Download link for Mifos® Security Plugin ](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosSecurityPlugin/MifosSecurityPlugin-1.12.0.zip/download)  and extract the files (java jar files are on it)
 
-2. Option 1 - Execute only for Docker® - Create a directory, copy the Mifos® Reporting Plugin and the Pentaho® libraries in it
+2. Option 1 - Execute only for Docker® - Create a directory, copy the Mifos® Security Plugin and the Pentaho® libraries in it
 
 ```bash
     mkdir mifos-security-plugin  && cd mifos-security-plugin
 ```
 
-2.  Option 2 - Execute only for Apache Tomcat® - Copy the Mifos® Reporting Plugin and Pentaho® libraries in $TOMCAT_HOME/webapps/fineract-provider/WEB-INF/lib/
+2.  Option 2 - Execute only for Apache Tomcat® - Copy the Mifos® Security Plugin libraries in $TOMCAT_HOME/webapps/fineract-provider/WEB-INF/lib/
 
 3. Restart Docker® or Apache Tomcat®
 
@@ -35,7 +35,7 @@ java -Dloader.path=$MIFOS_SECURITY_PLUGIN_HOME/libs/ -jar $APACHE_FINERACT_HOME/
 ```
 
 
-Please note that the library will work using the latest Apache Fineract® development branch (10th August 2025), also make sure you got installed the type fonts required by the reports. This Mifos® Reporting Plugin will work only on Apache Tomcat® version 10+. 
+Please note that the library will work using the latest Apache Fineract® development branch (10th August 2025), also make sure you got installed the type fonts required by the reports. This Mifos® Security Plugin will work only on Apache Tomcat® version 10+. 
 
 
 ## License
@@ -50,7 +50,7 @@ Note that the code and report templates in this git repo itself are
 
 ## Important
 
-* Mifos® and Mifos® Reporting Plugin are not affiliated with, endorsed by, or otherwise associated with the Apache Software Foundation® (ASF) or any of its projects.
+* Mifos® and Mifos® Security Plugin are not affiliated with, endorsed by, or otherwise associated with the Apache Software Foundation® (ASF) or any of its projects.
 * Apache Software Foundation® is a vendor-neutral organization and it is an important part of the brand is that Apache Software Foundation® (ASF) projects are governed independently.
 * Apache Fineract®, Fineract, Apache, the Apache® feather, and the Apache Fineract® project logo are either registered trademarks or trademarks of the Apache Software Foundation®.
 
