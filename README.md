@@ -4,7 +4,7 @@
 
 1. [Download link for Mifos® Security Plugin ](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosSecurityPlugin/MifosSecurityPlugin-1.12.0.zip/download)  and extract the files (java jar files are on it)
 
-2. Option 1 - Execute only for Docker® - Create a directory, copy the Mifos® Security Plugin and the Pentaho® libraries in it
+2. Option 1 - Execute only for Docker® - Create a directory, copy the Mifos® Security Plugin libraries in it
 
 ```bash
     mkdir mifos-security-plugin  && cd mifos-security-plugin
@@ -41,9 +41,6 @@ Please note that the library will work using the latest Apache Fineract® develo
 ## License
 
 This code used to be part of the Mifos® codebase before it became [Apache Fineract®](https://fineract.apache.org).
-During that move, the Pentaho® related code had to be removed, because Pentaho®'s license prevents code using it from being part of an Apache Software Foundation® hosted project.
-
-The correct technical solution to resolve such conundrums is to use a plugin architecture - which is what this is.
 
 Note that the code and report templates in this git repo itself are
 [licensed to you under the Mozilla® Public License 2.0 (MPL)](https://github.com/openMF/mifos-security-plugin/blob/develop/LICENSE).
