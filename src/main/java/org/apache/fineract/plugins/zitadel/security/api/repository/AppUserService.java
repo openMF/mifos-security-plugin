@@ -185,7 +185,7 @@ public class AppUserService {
         resultado.put("roles", roles);
 
         logger.debug("=== Resultado final ===");
-        logger.debug(resultado);
+        logger.debug(resultado.toString());
         logger.debug("Resultado final: {}", resultado);
 
         return resultado;

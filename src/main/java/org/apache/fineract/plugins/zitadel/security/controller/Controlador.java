@@ -1,9 +1,7 @@
 package org.apache.fineract.plugins.zitadel.security.controller;
 
-import org.apache.fineract.plugins.zitadel.security.api.dto.*;
 import org.apache.fineract.plugins.zitadel.security.service.ApiService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.apache.fineract.plugins.zitadel.security.api.response.ApiResponse;
 import org.apache.fineract.plugins.zitadel.security.api.response.ApiResponsePass;
 import org.slf4j.Logger;
@@ -16,11 +14,27 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Map;
+import org.apache.fineract.plugins.zitadel.security.api.dto.AppUserRequest;
+import org.apache.fineract.plugins.zitadel.security.api.dto.OfficeUpdateRequest;
+import org.apache.fineract.plugins.zitadel.security.api.dto.ResponseZitadelDTO;
+import org.apache.fineract.plugins.zitadel.security.api.dto.RoleGrantRequest;
+import org.apache.fineract.plugins.zitadel.security.api.dto.RoleRequest;
+import org.apache.fineract.plugins.zitadel.security.api.dto.UpdateUserRequest;
+import org.apache.fineract.plugins.zitadel.security.api.dto.UserDTO;
+import org.apache.fineract.plugins.zitadel.security.api.dto.UserDetailsDTO;
+import org.apache.fineract.plugins.zitadel.security.api.dto.UserIdRequest;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
 
 @RestController
 @RequestMapping("/auth")
 public class Controlador {
 
+    private static final Logger logger = LoggerFactory.getLogger(Controlador.class);
+    
     private ArrayList<String> tasks = new ArrayList<>();
     private static final Logger log = LoggerFactory.getLogger(Controlador.class);
 
