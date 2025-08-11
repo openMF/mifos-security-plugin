@@ -31,12 +31,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
 @RequestMapping("/auth")
-public class Controlador {
+public class SecurityController {
 
-    private static final Logger logger = LoggerFactory.getLogger(Controlador.class);
+    private static final Logger logger = LoggerFactory.getLogger(SecurityController.class);
     
     private ArrayList<String> tasks = new ArrayList<>();
-    private static final Logger log = LoggerFactory.getLogger(Controlador.class);
+    private static final Logger log = LoggerFactory.getLogger(SecurityController.class);
 
     @Autowired
     ApiService apiService;
