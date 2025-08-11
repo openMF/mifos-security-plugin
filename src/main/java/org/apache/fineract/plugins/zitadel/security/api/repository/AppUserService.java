@@ -95,7 +95,7 @@ public class AppUserService {
         }, rs -> rs.next() ? String.valueOf(rs.getLong(1)) : null);
 
         logger.debug("[resolverOfficeId] resultado officeId={}", officeId);
-        System.out.println("[resolverOfficeId] schema=" + schema + " key=" + key + " officeId=" + officeId);
+        logger.debug("[resolverOfficeId] schema=" + schema + " key=" + key + " officeId=" + officeId);
         return officeId;
     }
 
@@ -166,7 +166,7 @@ public class AppUserService {
             logger.debug("Filas encontradas (pass #2): {}", filas.size());
         }
 
-        System.out.println("=== Resultado crudo de la consulta ===");
+        logger.debug("=== Resultado crudo de la consulta ===");
         filas.forEach(System.out::println);
 
         if (filas.isEmpty()) {
@@ -184,8 +184,8 @@ public class AppUserService {
                 .toList();
         resultado.put("roles", roles);
 
-        System.out.println("=== Resultado final ===");
-        System.out.println(resultado);
+        logger.debug("=== Resultado final ===");
+        logger.debug(resultado);
         logger.debug("Resultado final: {}", resultado);
 
         return resultado;

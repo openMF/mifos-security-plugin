@@ -12,6 +12,6 @@ public class SecurityConfigDebugger {
 
     @PostConstruct
     public void init() {
-        System.out.println("### Issuer URI:" + issuerUri);
+        logger.debug("### Issuer URI:" + issuerUri);
     }
 }

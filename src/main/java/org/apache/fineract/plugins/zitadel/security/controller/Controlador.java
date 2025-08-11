@@ -112,7 +112,7 @@ public class Controlador {
 
     @PostMapping("/user")
     public ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(@RequestBody UserIdRequest dto) {
-        System.out.println("User ID: " + dto.getUserId());
+        logger.debug("User ID: " + dto.getUserId());
         return userService.getUser(dto.getUserId());
     }
 
