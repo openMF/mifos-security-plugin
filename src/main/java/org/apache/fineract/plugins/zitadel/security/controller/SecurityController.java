@@ -121,7 +121,7 @@ public class SecurityController {
             e.printStackTrace();
         }
 
-        return "Datos recibidos";
+        return "data recibidos";
     }
 
     @PostMapping("/user")
@@ -140,9 +140,9 @@ public class SecurityController {
         return userService.updatePass(request);
     }
 
-    @PostMapping("/user/Obtenertoken")
-    public String obtenerToken() {
-        return userService.obtenerToken();
+    @PostMapping("/user/getToken")
+    public String getToken() {
+        return userService.getToken();
     }
 
     @DeleteMapping("/user/")
@@ -181,8 +181,8 @@ public class SecurityController {
     }
 
     @PostMapping("/user/dataUserBD")
-    public ResponseEntity<ApiResponse<Object>> getDatosExtraUsuario(@RequestBody UserIdRequest request) {
-        return userService.getDatosExtraUsuario(request.getUserId());
+    public ResponseEntity<ApiResponse<Object>> getdataExtraUser(@RequestBody UserIdRequest request) {
+        return userService.getdataExtraUser(request.getUserId());
     }
 
     @PostMapping("/notifications")

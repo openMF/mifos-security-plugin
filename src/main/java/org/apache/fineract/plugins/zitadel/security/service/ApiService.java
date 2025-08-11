@@ -15,7 +15,7 @@ public interface ApiService {
     ResponseEntity<?> getToken(Map<String, String> payload);
     ResponseEntity<ApiResponse<Object>> createUser(UserDTO userDTO);
     ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(String id);
-    String obtenerToken();
+    String getToken();
     String updateUser(UpdateUserRequest request);
     ResponseEntity<ApiResponsePass> updatePass(Map<String, Object> jsonBody);
     ResponseEntity<ApiResponse<Object>> deleteUser(Long userId);
@@ -26,7 +26,7 @@ public interface ApiService {
     ResponseEntity<ApiResponse<Object>> updateRolesToUser(RoleGrantRequest data);
     ResponseEntity<ApiResponse<Object>> createUserBD(AppUserRequest request);
     ResponseEntity<ApiResponse<Object>> updateOfficeAndStaffToUser(OfficeUpdateRequest data);
-    ResponseEntity<ApiResponse<Object>> getDatosExtraUsuario(String userId);
+    ResponseEntity<ApiResponse<Object>> getdataExtraUser(String userId);
     ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload);
     ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap);
     ResponseEntity<String> getProjectRoles();

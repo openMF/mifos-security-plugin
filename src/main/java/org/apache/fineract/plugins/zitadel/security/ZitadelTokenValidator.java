@@ -35,7 +35,7 @@ public class ZitadelTokenValidator {
         try {
             return jwtDecoder.decode(token);
         } catch (JwtException e) {
-            throw new RuntimeException("Invalid JWT Token: " + e.getMessage(), e);
+            throw new RuntimeException("Invalid JWT Token: "+ e.getMessage(), e);
         }
     }
 }

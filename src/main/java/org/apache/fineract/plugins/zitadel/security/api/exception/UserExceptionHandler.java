@@ -60,8 +60,8 @@ public class UserExceptionHandler {
     }
 
     private int getCauseCode(String message) {
-        if (message.contains("obligatorio") || message.contains("blank")) return 6;
-        if (message.contains("formato válido")) return 4;
+        if (message.contains("required") || message.contains("blank")) return 6;
+        if (message.contains("valid format")) return 4;
         return 0;
     }
 

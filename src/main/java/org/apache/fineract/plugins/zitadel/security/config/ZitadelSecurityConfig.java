@@ -23,6 +23,11 @@ public class ZitadelSecurityConfig {
     @Autowired
     private TenantInitializationFilter tenantInitializationFilter;
 
+    @Value("${fineract.plugin.oidc.frontend-url}")
+    private String frontUrl;
+
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String uri;
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -53,8 +58,7 @@ public class ZitadelSecurityConfig {
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())))
 
-                // 🔽 Agrega tu filtro personalizado antes del UsernamePasswordAuthenticationFilter
-                .addFilterBefore(tenantInitializationFilter, UsernamePasswordAuthenticationFilter.class);
+               .addFilterBefore(tenantInitializationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -63,10 +67,10 @@ public class ZitadelSecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));  // origen de Angular
+        corsConfiguration.setAllowedOrigins(List.of(frontUrl)); 
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setAllowCredentials(true);  // necesario si usas cookies o Authorization headers
+        corsConfiguration.setAllowCredentials(true);  
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
@@ -75,6 +79,6 @@ public class ZitadelSecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        return JwtDecoders.fromIssuerLocation("https://plugin-auth-ofrdfj.us1.zitadel.cloud");
+        return JwtDecoders.fromIssuerLocation(uri);
     }
 }

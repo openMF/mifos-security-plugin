@@ -42,7 +42,7 @@ public class AppUserService {
         this.context = context;
         this.databasePasswordEncryptor = databasePasswordEncryptor;
         this.environment = environment;
-        this.jdbcTemplate = new JdbcTemplate(tenantDataSource); // DataSource multi-tenant (rota por contexto)
+        this.jdbcTemplate = new JdbcTemplate(tenantDataSource);
     }
 
 
@@ -50,7 +50,7 @@ public class AppUserService {
     private String getSchema() {
         var tenant = ThreadLocalContextUtil.getTenant();
         if (tenant == null || tenant.getConnection() == null) {
-            throw new IllegalStateException("Tenant no establecido (ThreadLocalContextUtil.getTenant() es null).");
+            throw new IllegalStateException("Tenant not set (ThreadLocalContextUtil.getTenant() is null).");
         }
         return tenant.getConnection().getSchemaName();
     }
@@ -68,11 +68,10 @@ public class AppUserService {
         final String key = (userKey == null) ? null : userKey.trim();
         logger.debug("[resolverOfficeId] schema={}, userKey='{}'", schema, key);
         if (key == null || key.isEmpty()) {
-            logger.warn("[resolverOfficeId] userKey vacío");
+            logger.warn("[resolverOfficeId] empty userKey");
             return null;
         }
 
-        // Query única: intenta por id o por username_zitadel
         String sql = """
         SELECT u.office_id
         FROM %s.m_appuser u
@@ -80,7 +79,6 @@ public class AppUserService {
         LIMIT 1
     """.formatted(schema);
 
-        // bindeo robusto: si key no es numérico, setLong a null (usa setNull)
         Long asLong = null;
         try { asLong = Long.valueOf(key); } catch (NumberFormatException ignore) {}
 
@@ -101,7 +99,7 @@ public class AppUserService {
 
 
 
-    public Map<String, Object> obtenerDatosUsuarioPorId(String userKey) {
+    public Map<String, Object> getUserDataById(String userKey) {
         final String schema = getSchema();
 
 
@@ -110,7 +108,7 @@ public class AppUserService {
         logger.debug("OfficeId resuelto: {}", officeIdStr);
 
         if (officeIdStr == null || officeIdStr.isBlank()) {
-            throw new EmptyResultDataAccessException("No se encontró office_id para userKey: " + userKey, 1);
+            throw new EmptyResultDataAccessException("No office_id found for userKey:" + userKey, 1);
         }
 
         Long officeId;
@@ -118,7 +116,7 @@ public class AppUserService {
             officeId = Long.valueOf(officeIdStr);
         } catch (NumberFormatException nfe) {
             throw new PlatformDataIntegrityException("error.msg.office.id.not.numeric",
-                    "office_id no es numérico: " + officeIdStr);
+                    "office_id is not numeric:" + officeIdStr);
         }
 
         boolean isNumeric;
@@ -159,7 +157,7 @@ public class AppUserService {
               AND o.id = ?
         """.formatted(schema, schema, schema, schema);
 
-            logger.debug("SQL (pass #2 fallback por username_zitadel):\n{}", sql2);
+            logger.debug("SQL (pass #2 fallback by username_zitadel):\n{}", sql2);
             logger.debug("Bind (pass #2): username_zitadel={}, officeId={}", userKey, officeId);
 
             filas = jdbcTemplate.queryForList(sql2, userKey.trim(), officeId);
@@ -194,7 +192,7 @@ public class AppUserService {
 
 
 
-    public void insertarAppUserConRoles(
+    public void insertAppUserWithRoles(
             String id,
             String officeId,
             String staffId,
@@ -203,7 +201,6 @@ public class AppUserService {
             String lastname,
             List<String> roleIds
     ) {
-        // (opcional) valida tenant activo
         getSchema();
 
         String schema = getSchema();
@@ -219,12 +216,12 @@ public class AppUserService {
                 id,
                 officeId,
                 staffId,
-                id,                // username (si así lo quieres)
-                usernameZitadel,   // username_zitadel
+                id,                
+                usernameZitadel,  
                 firstname,
                 lastname,
-                "",                // password
-                ""                 // email
+                "",              
+                ""              
         );
 
         String insertRoleSql = """
@@ -238,10 +235,10 @@ public class AppUserService {
             }
         }
 
-        logger.info("Usuario {} insertado con roles {}", id, roleIds);
+        logger.info("User {} inserted with roles {}", id, roleIds);
     }
 
-    public void actualizarDatosUsuario(String id, String usernameZitadel, String firstname, String lastname) {
+    public void updateUserData(String id, String usernameZitadel, String firstname, String lastname) {
         String schema = getSchema();
         String sql = """
             UPDATE %s.m_appuser
@@ -253,11 +250,11 @@ public class AppUserService {
 
         int filas = jdbcTemplate.update(sql, usernameZitadel, firstname, lastname, id);
         if (filas == 0) {
-            throw new RuntimeException("No se encontró ningún usuario con el ID proporcionado: " + id);
+            throw new RuntimeException("No user found with the provided ID: " + id);
         }
     }
 
-    public void eliminarUsuarioConRoles(String id) {
+    public void deleteUserWithRoles(String id) {
         String schema = getSchema();
 
         String deleteRolesSql = """
@@ -272,11 +269,11 @@ public class AppUserService {
         """.formatted(schema);
         int filas = jdbcTemplate.update(deleteUserSql, id);
         if (filas == 0) {
-            throw new EmptyResultDataAccessException("No se encontró ningún usuario con el ID: " + id, 1);
+            throw new EmptyResultDataAccessException("No user found with the ID:" + id, 1);
         }
     }
 
-    public void actualizarRoles(RoleGrantRequest data) {
+    public void updateRoles(RoleGrantRequest data) {
         String schema = getSchema();
         String userId = data.getUserId();
         List<String> nuevosRoles = data.getRoleKeys();
@@ -298,7 +295,7 @@ public class AppUserService {
         }
     }
 
-    public void actualizarOficinaYStaff(OfficeUpdateRequest data) {
+    public void updateOfficeAndStaff(OfficeUpdateRequest data) {
         String schema = getSchema();
         String sql = """
             UPDATE %s.m_appuser
@@ -308,7 +305,7 @@ public class AppUserService {
 
         int filas = jdbcTemplate.update(sql, data.getOfficeId(), data.getStaffId(), data.getUserId());
         if (filas == 0) {
-            throw new EmptyResultDataAccessException("No se encontró el usuario con id: " + data.getUserId(), 1);
+            throw new EmptyResultDataAccessException("User with id not found: " + data.getUserId(), 1);
         }
     }
 

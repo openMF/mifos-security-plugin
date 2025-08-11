@@ -62,13 +62,13 @@ public class ApiServiceImp implements ApiService{
 
 
     @Value("${fineract.plugin.oidc.project.id}")
-    private String proyectId;
+    private String projectId;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String url;
 
     @Value("${fineract.plugin.oidc.scope}")
-    private String scopetoken;
+    private String scopeToken;
 
     @Value("${fineract.plugin.oidc.service-user.client-id}")
     private String clientId;
@@ -83,7 +83,7 @@ public class ApiServiceImp implements ApiService{
     private String uri;
 
     @Value("${fineract.plugin.oidc.frontend-url}")
-    private String urlfront;
+    private String frontUrl;
 
     @Value("${fineract.plugin.oidc.webapp.client-id}")
     private String CLIENT_ID;
@@ -110,19 +110,14 @@ public class ApiServiceImp implements ApiService{
 
 
 
-
-
-
-
-
     @Override
     public ResponseEntity<ApiResponse<Object>> getRoles() {
         try {
 
-            String url = uri+"/management/v1/projects/" + proyectId + "/roles/_search";
+            String url = uri+"/management/v1/projects/" + projectId + "/roles/_search";
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(obtenerToken());
+            headers.setBearerAuth(getToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             JSONObject json = new JSONObject();
@@ -137,7 +132,7 @@ public class ApiServiceImp implements ApiService{
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
 
     }
@@ -145,10 +140,10 @@ public class ApiServiceImp implements ApiService{
     @Override
     public ResponseEntity<ApiResponse<Object>> createRol(RoleRequest data) {
         try {
-            String url = uri+"/management/v1/projects/" + proyectId + "/roles";
+            String url = uri+"/management/v1/projects/" + projectId + "/roles";
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(obtenerToken());
+            headers.setBearerAuth(getToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             JSONObject json = new JSONObject();
@@ -160,26 +155,26 @@ public class ApiServiceImp implements ApiService{
 
             ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.POST, entity, Object.class);
 
-            return ResponseEntity.ok(new ApiResponse<>(200, "Rol creado correctamente", response.getBody()));
+            return ResponseEntity.ok(new ApiResponse<>(200, "Successfully created role", response.getBody()));
 
         } catch (HttpClientErrorException e) {
             return handleZitadelError(e);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
     @Override
     public ResponseEntity<ApiResponse<Object>> deleteRol(String roleKey) {
         try {
-            String url = uri+"/management/v1/projects/" + proyectId + "/roles/" + roleKey;
+            String url = uri+"/management/v1/projects/" + projectId + "/roles/" + roleKey;
 
             RestTemplate restTemplate = new RestTemplate();
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(obtenerToken());
+            headers.setBearerAuth(getToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -192,7 +187,7 @@ public class ApiServiceImp implements ApiService{
             );
 
             return ResponseEntity.ok(
-                    new ApiResponse<>(200, "Rol eliminado correctamente", response.getBody())
+                    new ApiResponse<>(200, "Successfully deleted role", response.getBody())
             );
 
         } catch (HttpClientErrorException e) {
@@ -200,18 +195,18 @@ public class ApiServiceImp implements ApiService{
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
     @Override
     public ResponseEntity<ApiResponse<Object>> updateRol(String roleKey, RoleRequest data) {
         try {
-            String url = uri+"/management/v1/projects/" + proyectId + "/roles/" + roleKey;
+            String url = uri+"/management/v1/projects/" + projectId + "/roles/" + roleKey;
 
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(obtenerToken());
+            headers.setBearerAuth(getToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             JSONObject payload = new JSONObject();
@@ -227,18 +222,18 @@ public class ApiServiceImp implements ApiService{
                     Object.class
             );
 
-            return ResponseEntity.ok(new ApiResponse<>(200, "Rol actualizado correctamente", response.getBody()));
+            return ResponseEntity.ok(new ApiResponse<>(200, "Role updated successfully", response.getBody()));
 
         } catch (HttpClientErrorException e) {
             return handleZitadelError(e);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
     @Override
-    public String obtenerToken() {
+    public String getToken() {
         try {
 
             HttpHeaders headers = new HttpHeaders();
@@ -248,7 +243,7 @@ public class ApiServiceImp implements ApiService{
             body.add("grant_type", "client_credentials");
             body.add("client_id", clientId);
             body.add("client_secret", client_secret);
-            body.add("scope", scopetoken);
+            body.add("scope", scopeToken);
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
@@ -261,15 +256,15 @@ public class ApiServiceImp implements ApiService{
                 if (responseBody != null && responseBody.containsKey("access_token")) {
                     return responseBody.get("access_token").toString();
                 } else {
-                    throw new RuntimeException("Token no encontrado en la respuesta");
+                    throw new RuntimeException("Token not found in response");
                 }
             } else {
-                throw new RuntimeException("Error al obtener el token: " + response.getStatusCode());
+                throw new RuntimeException("Error getting token: " + response.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
-            throw new RuntimeException("Error al obtener el token de Zitadel", e);
+            throw new RuntimeException("Error getting Zitadel token", e);
         } catch (Exception e) {
-            throw new RuntimeException("Error inesperado al obtener el token", e);
+            throw new RuntimeException("Unexpected error getting token", e);
         }
     }
 
@@ -323,24 +318,24 @@ public class ApiServiceImp implements ApiService{
             Request request = new Request.Builder()
                     .url(url.concat("/management/v1/users/human"))
                     .post(body)
-                    .addHeader("Authorization", "Bearer " + obtenerToken())
+                    .addHeader("Authorization", "Bearer " + getToken())
                     .addHeader("Content-Type", "application/json")
                     .build();
 
             Response response = client.newCall(request).execute();
 
             if (!response.isSuccessful()) {
-                String responseBody = response.body() != null ? response.body().string() : "Sin cuerpo";
-                throw new RuntimeException("Error al crear usuario en Zitadel: " + responseBody);
+                String responseBody = response.body() != null ? response.body().string() : "no response body";
+                throw new RuntimeException("Error creating user in Zitadel: " + responseBody);
             }
 
             String responseBody = response.body().string();
             Map<String, Object> responseData = mapper.readValue(responseBody, Map.class);
 
-            return ResponseEntity.ok(new ApiResponse<>(200, "Usuario creado correctamente", responseData));
+            return ResponseEntity.ok(new ApiResponse<>(200, "Successfully created user", responseData));
 
         } catch (Exception e) {
-            throw new RuntimeException("Error al crear usuario en Zitadel", e);
+            throw new RuntimeException("Error creating user in Zitadel", e);
         }
     }
 
@@ -348,7 +343,7 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(String id) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(obtenerToken());
+        headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -366,7 +361,7 @@ public class ApiServiceImp implements ApiService{
                 List<UserZitadelDto> allUsers = responseBody.getResult();
 
                 if (id == null || id.isEmpty()) {
-                    return ResponseEntity.ok(new ApiResponse<>(200, "Usuarios obtenidos", responseBody));
+                    return ResponseEntity.ok(new ApiResponse<>(200, "Users obtained", responseBody));
                 }
 
                 List<UserZitadelDto> filteredUsers = allUsers.stream()
@@ -377,12 +372,12 @@ public class ApiServiceImp implements ApiService{
                 filteredResponse.setDetails(responseBody.getDetails());
                 filteredResponse.setResult(filteredUsers);
 
-                return ResponseEntity.ok(new ApiResponse<>(200, "Usuarios obtenidos", filteredResponse));
+                return ResponseEntity.ok(new ApiResponse<>(200, "Users obtained", filteredResponse));
             }
 
-            return ResponseEntity.ok(new ApiResponse<>(404, "Usuario no encontrado", null));
+            return ResponseEntity.ok(new ApiResponse<>(404, "User not found", null));
         } catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponse<>(400, "Error al obtener el usuario", null));
+            return ResponseEntity.ok(new ApiResponse<>(400, "Error getting user", null));
         }
     }
 
@@ -392,11 +387,11 @@ public class ApiServiceImp implements ApiService{
         StringBuilder result = new StringBuilder();
 
         if (req.email != null) {
-            result.append(postRequest(baseUrl + req.userId + "/email", obtenerToken(), req.email));
+            result.append(postRequest(baseUrl + req.userId + "/email", getToken(), req.email));
         }
 
         if (req.phone != null) {
-            result.append(postRequest(baseUrl + req.userId + "/phone", obtenerToken(), req.phone));
+            result.append(postRequest(baseUrl + req.userId + "/phone", getToken(), req.phone));
         }
 
         if (req.profile != null) {
@@ -425,8 +420,8 @@ public class ApiServiceImp implements ApiService{
                     req.profile.preferredLanguage,
                     req.profile.gender
             );
-            result.append(putRequest(url, obtenerToken(), body));
-            appUserService.actualizarDatosUsuario(req.userId, req.profile.username, req.profile.givenName, req.profile.familyName);
+            result.append(putRequest(url, getToken(), body));
+            appUserService.updateUserData(req.userId, req.profile.username, req.profile.givenName, req.profile.familyName);
 
 
         }
@@ -438,10 +433,10 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponsePass> updatePass(Map<String, Object> jsonBody) {
         String baseUrl = uri + "/v2/users/";
         String userId = (String) jsonBody.get("userId");
-        String token = obtenerToken();
+        String token = getToken();
 
         if (userId == null || token == null) {
-            ApiResponsePass error = new ApiResponsePass(400, "Faltan campos requeridos: 'userId' o 'token'");
+            ApiResponsePass error = new ApiResponsePass(400, "Required fields are missing: 'userId' or 'token'");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
 
@@ -470,7 +465,7 @@ public class ApiServiceImp implements ApiService{
 
             ResponseEntity<String> response = restTemplate.exchange(url, method, entity, String.class);
 
-            ApiResponsePass success = new ApiResponsePass(response.getStatusCodeValue(), "Operación exitosa");
+            ApiResponsePass success = new ApiResponsePass(response.getStatusCodeValue(), "successful process");
             return ResponseEntity.status(response.getStatusCode()).body(success);
 
         } catch (HttpStatusCodeException e) {
@@ -478,7 +473,7 @@ public class ApiServiceImp implements ApiService{
             return ResponseEntity.status(e.getStatusCode()).body(error);
         } catch (Exception e) {
             e.printStackTrace();
-            ApiResponsePass error = new ApiResponsePass(500, "Error interno del servidor: " + e.getMessage());
+            ApiResponsePass error = new ApiResponsePass(500, "Internal Server Error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -503,7 +498,7 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<Object>> deleteUser(Long userId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(obtenerToken());
+        headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -514,13 +509,13 @@ public class ApiServiceImp implements ApiService{
                     entity,
                     ResponseZitadelDTO.class
             );
-            appUserService.eliminarUsuarioConRoles(userId.toString());
-            return ResponseEntity.ok(new ApiResponse<>(200, "Usuario eliminado", response));
+            appUserService.deleteUserWithRoles(userId.toString());
+            return ResponseEntity.ok(new ApiResponse<>(200, "Deleted user", response));
         } catch (HttpClientErrorException e){
             return handleZitadelError(e);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
@@ -528,7 +523,7 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<Object>> desactivate(Long userId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(obtenerToken());
+        headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -541,7 +536,7 @@ public class ApiServiceImp implements ApiService{
             );
 
             return ResponseEntity.ok(
-                    new ApiResponse<>(200, "Usuario desactivado correctamente", response.getBody())
+                    new ApiResponse<>(200, "User successfully deactivated", response.getBody())
             );
 
         } catch (HttpClientErrorException e) {
@@ -549,7 +544,7 @@ public class ApiServiceImp implements ApiService{
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
@@ -557,7 +552,7 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<Object>> reactivate(Long userId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(obtenerToken());
+        headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -570,7 +565,7 @@ public class ApiServiceImp implements ApiService{
             );
 
             return ResponseEntity.ok(
-                    new ApiResponse<>(200, "Usuario activado correctamente", response.getBody())
+                    new ApiResponse<>(200, "Successfully activated user", response.getBody())
             );
 
         } catch (HttpClientErrorException e) {
@@ -578,7 +573,7 @@ public class ApiServiceImp implements ApiService{
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
@@ -586,7 +581,7 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<Object>> getUserById(Long userId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(obtenerToken());
+        headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -596,7 +591,7 @@ public class ApiServiceImp implements ApiService{
             );
 
             return ResponseEntity.ok(
-                    new ApiResponse<>(200, "Usuario obtenido correctamente", response.getBody())
+                    new ApiResponse<>(200, "Successfully obtained user", response.getBody())
             );
 
         } catch (HttpClientErrorException e) {
@@ -604,7 +599,7 @@ public class ApiServiceImp implements ApiService{
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
@@ -617,18 +612,18 @@ public class ApiServiceImp implements ApiService{
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(obtenerToken());
+        headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         try {
             JSONObject payload = new JSONObject();
-            payload.put("projectId", proyectId);
+            payload.put("projectId", projectId);
             payload.put("roleKeys", new JSONArray(data.getRoleKeys()));
 
             HttpEntity<String> assignEntity = new HttpEntity<>(payload.toString(), headers);
             ResponseEntity<Object> assignResp = restTemplate.exchange(urlAssign, HttpMethod.POST, assignEntity, Object.class);
 
-            return ResponseEntity.ok(new ApiResponse<>(200, "Rol(es) asignado(s) correctamente", assignResp.getBody()));
+            return ResponseEntity.ok(new ApiResponse<>(200, "Roles assigned successfully", assignResp.getBody()));
 
         } catch (HttpClientErrorException e) {
             String body = e.getResponseBodyAsString();
@@ -657,7 +652,7 @@ public class ApiServiceImp implements ApiService{
                     if (results != null) {
                         for (int i = 0; i < results.length(); i++) {
                             JSONObject grant = results.getJSONObject(i);
-                            if (proyectId.equals(grant.optString("projectId"))) {
+                            if (projectId.equals(grant.optString("projectId"))) {
                                 grantIdToUpdate = grant.optString("id");
                                 break;
                             }
@@ -666,31 +661,31 @@ public class ApiServiceImp implements ApiService{
 
                     if (grantIdToUpdate == null) {
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ApiResponse<>(400, "No se pudo encontrar grant existente para actualizar", null));
+                                .body(new ApiResponse<>(400, "Could not find existing grant to update", null));
                     }
                     String updateUrl = uri+"/management/v1/users/" + userId + "/grants/" + grantIdToUpdate;
 
                     JSONObject updatePayload = new JSONObject();
-                    updatePayload.put("projectId", proyectId);
+                    updatePayload.put("projectId", projectId);
                     updatePayload.put("roleKeys", new JSONArray(data.getRoleKeys()));
 
                     HttpEntity<String> updateEntity = new HttpEntity<>(updatePayload.toString(), headers);
                     ResponseEntity<Object> updateResp = restTemplate.exchange(updateUrl, HttpMethod.PUT, updateEntity, Object.class);
 
-                    return ResponseEntity.ok(new ApiResponse<>(200, "Roles actualizados correctamente", updateResp.getBody()));
+                    return ResponseEntity.ok(new ApiResponse<>(200, "Roles updated successfully", updateResp.getBody()));
 
                 } catch (HttpClientErrorException updateEx) {
                     String updateBody = updateEx.getResponseBodyAsString();
                     if (updateEx.getStatusCode() == HttpStatus.BAD_REQUEST &&
                             updateBody.contains("User grant has not been changed")) {
-                        return ResponseEntity.ok(new ApiResponse<>(200, "Rol(es) ya estaban asignados. Nada que actualizar.", null));
+                        return ResponseEntity.ok(new ApiResponse<>(200, "Role(s) were already assigned. Nothing to update.", null));
                     } else {
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(new ApiResponse<>(500, "Error al actualizar grant existente", null));
+                                .body(new ApiResponse<>(500, "Error updating existing grant", null));
                     }
                 } catch (Exception ex) {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ApiResponse<>(500, "Error inesperado al actualizar grant", null));
+                            .body(new ApiResponse<>(500, "Unexpected error when updating the grant", null));
                 }
             }
 
@@ -698,18 +693,18 @@ public class ApiServiceImp implements ApiService{
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Error inesperado: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
-    // TODO: Bad_Request, maneja el error del consumo y se queda interno dependiendo del codigo recivido ya sea 5 o 9, si fuera diferente es directo un BAD_REQUEST
+    // TODO: Bad_Request, It handles the consumption error and remains internal depending on the code received, whether it is 5 or 9. If it is different, a BAD_REQUEST is issued directly.
     private ResponseEntity<ApiResponse<Object>> handleZitadelError(HttpClientErrorException e) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> errorJson = mapper.readValue(e.getResponseBodyAsString(), Map.class);
 
             int code = (int) errorJson.getOrDefault("code", 400);
-            String message = (String) errorJson.getOrDefault("message", "Error desconocido");
+            String message = (String) errorJson.getOrDefault("message", "Unknown error");
             Object details = errorJson.get("details");
 
             HttpStatus status = (code == 5) ? HttpStatus.NOT_FOUND : (code == 9) ? HttpStatus.ACCEPTED : HttpStatus.BAD_REQUEST;
@@ -719,7 +714,7 @@ public class ApiServiceImp implements ApiService{
 
         } catch (Exception parseException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(400, "Error al parsear el mensaje de error", null));
+                    .body(new ApiResponse<>(400, "Error parsing error message", null));
         }
     }
 
@@ -735,13 +730,13 @@ public class ApiServiceImp implements ApiService{
                         FineractPlatformTenant tenant = tenantDetailsService.loadTenantById(tenantIdentifier);
                         ThreadLocalContextUtil.setTenant(tenant);
                     } else {
-                        throw new IllegalStateException("tenantIdentifier no encontrado en el token.");
+                        throw new IllegalStateException("tenantIdentifier not found in token.");
                     }
                 } else {
-                    throw new IllegalStateException("Autenticación no es de tipo JwtAuthenticationToken.");
+                    throw new IllegalStateException("Authentication is not of type JwtAuthenticationToken.");
                 }
             }
-            appUserService.insertarAppUserConRoles(
+            appUserService.insertAppUserWithRoles(
                     request.getId(),
                     request.getOfficeId(),
                     request.getStaffId(),
@@ -751,10 +746,10 @@ public class ApiServiceImp implements ApiService{
                     request.getRoleIds()
             );
 
-            return ResponseEntity.ok(new ApiResponse<>(200, "Usuario creado correctamente", null));
+            return ResponseEntity.ok(new ApiResponse<>(200, "Successfully created user", null));
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse<>(500, "Error al crear usuario: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(500, "Error creating user: " + e.getMessage(), null));
         }
     }
 
@@ -762,24 +757,24 @@ public class ApiServiceImp implements ApiService{
 
 
     @Override
-    public ResponseEntity<ApiResponse<Object>> getDatosExtraUsuario(String userId) {
+    public ResponseEntity<ApiResponse<Object>> getdataExtraUser(String userId) {
         try {
 
             if (ThreadLocalContextUtil.getTenant() == null) {
-                FineractPlatformTenant tenant = tenantDetailsService.loadTenantById("default"); // o el tenant que uses
+                FineractPlatformTenant tenant = tenantDetailsService.loadTenantById("default");
                 ThreadLocalContextUtil.setTenant(tenant);
             }
 
-            Map<String, Object> datos = appUserService.obtenerDatosUsuarioPorId(userId);
-            ApiResponse<Object> response = new ApiResponse<>(200, "Datos extra del usuario obtenidos correctamente", datos);
+            Map<String, Object> data = appUserService.getUserDataById(userId);
+            ApiResponse<Object> response = new ApiResponse<>(200, "Additional user data obtained successfully", data);
             return ResponseEntity.ok(response);
 
         } catch (EmptyResultDataAccessException e) {
-            ApiResponse<Object> response = new ApiResponse<>(404, "Usuario no encontrado", null);
+            ApiResponse<Object> response = new ApiResponse<>(404, "User not found", null);
             return ResponseEntity.status(404).body(response);
 
         } catch (Exception e) {
-            ApiResponse<Object> response = new ApiResponse<>(500, "Error interno: " + e.getMessage(), null);
+            ApiResponse<Object> response = new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null);
             return ResponseEntity.status(500).body(response);
         }
     }
@@ -788,16 +783,16 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<Object>> updateRolesToUser(RoleGrantRequest data){
         try {
             assignRolesToUser(data);
-            appUserService.actualizarRoles(data);
-            ApiResponse<Object> response = new ApiResponse<>(200, "Datos extra del usuario obtenidos correctamente", null);
+            appUserService.updateRoles(data);
+            ApiResponse<Object> response = new ApiResponse<>(200, "Additional user data obtained successfully", null);
             return ResponseEntity.ok(response);
 
         } catch (EmptyResultDataAccessException e) {
-            ApiResponse<Object> response = new ApiResponse<>(404, "Usuario no encontrado", null);
+            ApiResponse<Object> response = new ApiResponse<>(404, "User not found", null);
             return ResponseEntity.status(404).body(response);
 
         } catch (Exception e) {
-            ApiResponse<Object> response = new ApiResponse<>(500, "Error interno: " + e.getMessage(), null);
+            ApiResponse<Object> response = new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null);
             return ResponseEntity.status(500).body(response);
         }
     }
@@ -805,12 +800,12 @@ public class ApiServiceImp implements ApiService{
     @Override
     public ResponseEntity<ApiResponse<Object>> updateOfficeAndStaffToUser(OfficeUpdateRequest data) {
         try {
-            appUserService.actualizarOficinaYStaff(data);
-            return ResponseEntity.ok(new ApiResponse<>(200, "Office y staff actualizados correctamente", null));
+            appUserService.updateOfficeAndStaff(data);
+            return ResponseEntity.ok(new ApiResponse<>(200, "Office and staff updated successfully", null));
         } catch (EmptyResultDataAccessException e) {
-            return ResponseEntity.status(404).body(new ApiResponse<>(404, "Usuario no encontrado", null));
+            return ResponseEntity.status(404).body(new ApiResponse<>(404, "User not found", null));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(new ApiResponse<>(500, "Error interno: " + e.getMessage(), null));
+            return ResponseEntity.status(500).body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
 
@@ -831,7 +826,7 @@ public class ApiServiceImp implements ApiService{
             UserDetailsDTO userDetails = tokenMapper.mapTokenToUserDetails(tokenPayload);
 
             response.setStatus(200);
-            response.setMsg("Full user");
+            response.setMsg("User details retrieved successfully");
             response.setObject(userDetails);
             return ResponseEntity.ok(response);
 
@@ -855,10 +850,9 @@ public class ApiServiceImp implements ApiService{
             String code = payload.get("code");
             String codeVerifier = payload.get("code_verifier");
 
-            // Construir cuerpo correctamente
             String requestBody = "grant_type=authorization_code"
                     + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
-                    + "&redirect_uri=" + URLEncoder.encode(urlfront + "/callback", StandardCharsets.UTF_8)
+                    + "&redirect_uri=" + URLEncoder.encode(frontUrl + "/callback", StandardCharsets.UTF_8)
                     + "&client_id=" + URLEncoder.encode(CLIENT_ID, StandardCharsets.UTF_8)
                     + "&code_verifier=" + URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8)
                     + "&scope=" + URLEncoder.encode("openid profile email offline_access urn:zitadel:iam:org:project:321191693166617589:roles", StandardCharsets.UTF_8);
@@ -866,26 +860,24 @@ public class ApiServiceImp implements ApiService{
             HttpClient client = HttpClient.newHttpClient();
 
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(URI.create(uri + "/oauth/v2/token"))  // Asegúrate que `uri` sea tu dominio: https://plugin-auth-ofrdfj.us1.zitadel.cloud
+                    .uri(URI.create(uri + "/oauth/v2/token")) 
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            // Validar el código HTTP
             if (response.statusCode() != 200) {
-                return ResponseEntity.status(response.statusCode()).body("Error de autenticación: " + response.body());
+                return ResponseEntity.status(response.statusCode()).body("Authentication error: " + response.body());
             }
 
-            // Convertir JSON a Map
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> tokenData = mapper.readValue(response.body(), new TypeReference<>() {});
 
             return ResponseEntity.ok(tokenData);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener el token");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error getting token");
         }
     }
 
@@ -895,8 +887,11 @@ public class ApiServiceImp implements ApiService{
         UserDetailsDTO userDetails = new UserDetailsDTO();
 
         if (token == null || token.isEmpty()) {
-            return ResponseEntity.ok(new ApiResponse<>(500, "asd", null));
-        }
+    return ResponseEntity.ok(
+        new ApiResponse<>(500, "Null authentication token", null)
+    );
+}
+
 
         try {
             HttpClient client = HttpClient.newHttpClient();
@@ -909,8 +904,9 @@ public class ApiServiceImp implements ApiService{
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(500, "asdgvhvh", null));
-            }
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new ApiResponse<>(400, "Failed to fetch userinfo from OIDC endpoint", null));
+}
 
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> userInfo = objectMapper.readValue(response.body(), new TypeReference<>() {});
@@ -921,13 +917,12 @@ public class ApiServiceImp implements ApiService{
                     .collect(Collectors.toList());
 
 
-            List<RoleDTO> roleDTOS = permissionService.obtenerRoles(roleNames1);
-            List<String> permisosDesdeBD = permissionService.obtenerPermisosDesdeRoles(roleNames1);
+            List<RoleDTO> roleDTOS = permissionService.getRoles(roleNames1);
+            List<String> permisosDesdeBD = permissionService.getPermissionsFromRoles(roleNames1);
 
             userDetails.setUsername(userInfo.get("name").toString());
             userDetails.setUserId(Long.parseLong(userInfo.get("sub").toString()));
 
-            //userDetails.setBase64EncodedAuthenticationKey("bWlmb3M6cGFzc3dvcmQ");
             userDetails.setAuthenticated(true);
             userDetails.setOfficeId(1);
             userDetails.setOfficeName("office_name");
@@ -939,7 +934,7 @@ public class ApiServiceImp implements ApiService{
             return ResponseEntity.ok(new ApiResponse<>(200, "ok", userDetails));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(500, "asd", null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(500, "Unexpected error while fetching userinfo", null));
         }
     }
 
@@ -952,7 +947,7 @@ public class ApiServiceImp implements ApiService{
 
     public String getAccessTokenFromSecurityContext() {
         BearerTokenAuthentication auth = (BearerTokenAuthentication) SecurityContextHolder.getContext().getAuthentication();
-        return auth.getToken().getTokenValue(); // El token JWT original
+        return auth.getToken().getTokenValue();
     }
 
     public String getRolesFromZitadel(String accessToken, String projectId) {

@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+/*
 package org.apache.fineract.plugins.zitadel.security.api.service;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -63,3 +64,4 @@ public class TokenIntrospectionService {
         }
     }
 }
+*/

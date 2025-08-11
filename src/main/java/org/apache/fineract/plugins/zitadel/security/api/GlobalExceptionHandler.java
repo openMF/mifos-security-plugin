@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
         });
         ApiResponse<Object> response = new ApiResponse<>();
         response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
-        response.setMsg("Error de validación: " + errors.toString());
+        response.setMsg("Validation error: " + errors.toString());
         response.setObject(null);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
     }
@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleNotFound(NoHandlerFoundException ex) {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setStatus(HttpStatus.NOT_FOUND.value());
-        response.setMsg("Recurso no encontrado: " + ex.getRequestURL());
+        response.setMsg("Resource not found: " + ex.getRequestURL());
         response.setObject(null);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleAccessDenied(AccessDeniedException ex) {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setStatus(HttpStatus.FORBIDDEN.value());
-        response.setMsg("Acceso denegado");
+        response.setMsg("Access denied");
         response.setObject(null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception ex) {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.setMsg("Error interno del servidor: " + ex.getMessage());
+        response.setMsg("Internal Server Error: " + ex.getMessage());
         response.setObject(null);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }

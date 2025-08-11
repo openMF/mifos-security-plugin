@@ -35,7 +35,7 @@ public class PermissionService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<RoleDTO> obtenerRoles(List<String> roleIds) {
+    public List<RoleDTO> getRoles(List<String> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -60,7 +60,7 @@ public class PermissionService {
         );
     }
 
-    public List<String> obtenerPermisosDesdeRoles(List<String> roleIds) {
+    public List<String> getPermissionsFromRoles(List<String> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
             return Collections.emptyList();
         }

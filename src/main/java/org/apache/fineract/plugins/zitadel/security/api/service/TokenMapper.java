@@ -46,15 +46,13 @@ public class TokenMapper {
         UserDetailsDTO userDetails = new UserDetailsDTO();
         List<String> permisos = new ArrayList<>();
 
-        // Obtener el access token del tokenMap
         String accessToken = (String) tokenMap.getOrDefault("access_token", null);
 
         if (accessToken == null || accessToken.isEmpty()) {
-            throw new RuntimeException("Token nulo o inválido");
+            throw new RuntimeException("Null or invalid token");
         }
 
         try {
-            // Llamada al endpoint userinfo
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest userInfoRequest = HttpRequest.newBuilder()
                     .uri(URI.create(uri + "/oidc/v1/userinfo"))
@@ -65,37 +63,32 @@ public class TokenMapper {
             HttpResponse<String> userInfoResponse = client.send(userInfoRequest, HttpResponse.BodyHandlers.ofString());
 
             if (userInfoResponse.statusCode() != 200) {
-                throw new RuntimeException("Error al consultar userinfo: HTTP " + userInfoResponse.statusCode());
+                throw new RuntimeException("Error fetching userinfo: HTTP " + userInfoResponse.statusCode());
             }
 
-            // Convertir el JSON de respuesta a un mapa
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> userInfo = mapper.readValue(userInfoResponse.body(), Map.class);
 
-            // Asignar datos básicos
             userDetails.setUsername((String) userInfo.getOrDefault("preferred_username", "unknown"));
 
             String userId = (String) userInfo.getOrDefault("sub", "0");
             try {
                 userDetails.setUserId(Long.parseLong(userId));
             } catch (NumberFormatException ex) {
-                userDetails.setUserId(0L); // Valor por defecto si sub no es numérico
+                userDetails.setUserId(0L);  
             }
 
-            // Roles
             Map<String, Object> rolesMap = (Map<String, Object>) userInfo.get("urn:zitadel:iam:org:project:roles");
             List<String> roleNames = (rolesMap != null)
                     ? rolesMap.keySet().stream().map(Object::toString).collect(Collectors.toList())
                     : Collections.emptyList();
 
-            List<RoleDTO> roleDTOS = permissionService.obtenerRoles(roleNames);
-            List<String> permisosDesdeBD = permissionService.obtenerPermisosDesdeRoles(roleNames);
+            List<RoleDTO> roleDTOS = permissionService.getRoles(roleNames);
+            List<String> permisosDesdeBD = permissionService.getPermissionsFromRoles(roleNames);
 
-            // Quitar duplicados
             permisos.addAll(permisosDesdeBD);
             Set<String> permisosUnicos = new HashSet<>(permisos);
 
-            // Completar objeto UserDetailsDTO
             userDetails.setAccessToken(accessToken);
             userDetails.setAuthenticated(true);
             userDetails.setOfficeId(1);
@@ -109,7 +102,7 @@ public class TokenMapper {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error al procesar el token: " + e.getMessage());
+            throw new RuntimeException("Error processing token: " + e.getMessage());
         }
     }
 
