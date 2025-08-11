@@ -103,7 +103,7 @@ public class SecurityController {
     }
 
     @PostMapping("/user/crear")
-    public ResponseEntity<ApiResponse<Object>> crearUsuario(@RequestBody UserDTO dto) {
+    public ResponseEntity<ApiResponse<Object>> createUser(@RequestBody UserDTO dto) {
         return userService.createUser(dto);
     }
 
