@@ -36,23 +36,16 @@ public class ZitadelSecurityConfig {
         http
                 .securityMatcher(
                         "/fineract-provider/**",
-                        "/zitadel-token/**",
-                        "/tokenOIDC",
                         "/token",
-                        "/auth/**",
-                        "/userdetails",
-                        "/DTO-token"
+                        "/authentication/**",
+                        "/userdetails"
                 )
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/test",
-                                "/zitadel-token/token",
-                                "/auth/tokenOIDC",
-                                "/auth/token",
-                                "/auth/userdetails",
-                                "/auth/DTO-token",
+                                "/authentication/token",
+                                "/authentication/userdetails",
                                 "/actuator/**"
                         ).permitAll()
                         .anyRequest().authenticated()

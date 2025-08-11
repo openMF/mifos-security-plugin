@@ -28,36 +28,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/authentication")
 public class SecurityController {
-
-    private static final Logger logger = LoggerFactory.getLogger(SecurityController.class);
-    
-    private ArrayList<String> tasks = new ArrayList<>();
-    private static final Logger log = LoggerFactory.getLogger(SecurityController.class);
 
     @Autowired
     ApiService apiService;
 
-    @Autowired
-    ApiService userService;
-
-    @Autowired
-    ApiService rolesService;
-
-
-    // Sin seguridad
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("test from plugin");
-    }
-
-    // Con seguridad
-    @GetMapping("/test2")
-    public ResponseEntity<String> test2() {
-        return ResponseEntity.ok("test from plugin with security filter");
+    @PostMapping("/token")
+    public ResponseEntity<?> token(@RequestBody Map<String, String> payload) {
+        return apiService.getToken(payload);
     }
 
     @PostMapping("/userdetails")
@@ -65,130 +45,88 @@ public class SecurityController {
         return apiService.userDetails(tokenMap);
     }
 
-    @PostMapping("/DTO-token")
-    public ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(@RequestBody Map<String, Object> tokenPayload) {
-        return apiService.mapToken(tokenPayload);
-    }
-
-    @GetMapping("/api/project-roles")
-    public ResponseEntity<String> getProjectRoles() {
-        return apiService.getProjectRoles();
-    }
-
-    @PostMapping("/tokenOIDC")
-    public ResponseEntity<?> getToken(@RequestBody Map<String, String> payload) {
-        return apiService.getToken(payload);
-    }
-
-    @GetMapping("/roles")
+    @GetMapping("/role")
     public ResponseEntity<ApiResponse<Object>> listRoles() {
-        return rolesService.getRoles();
+        return apiService.getRoles();
     }
 
-    @PostMapping("/roles")
+    @PostMapping("/role")
     public ResponseEntity<ApiResponse<Object>> createRol(@RequestBody RoleRequest data) {
-        return rolesService.createRol(data);
+        return apiService.createRol(data);
     }
 
-    @DeleteMapping("/roles")
-    public ResponseEntity<ApiResponse<Object>> deleteRol( @RequestBody RoleRequest data) {
-        String id= data.getRoleKey();
-        return rolesService.deleteRol(id);
-    }
-
-    @PutMapping("/roles")
+    @PutMapping("/role")
     public ResponseEntity<ApiResponse<Object>> updateRol( @RequestBody RoleRequest data) {
-        String id= data.getRoleKey();
-        return rolesService.updateRol(id, data);
+        return apiService.updateRol(data.getRoleKey(), data);
     }
 
-    @PostMapping("/user/crear")
-    public ResponseEntity<ApiResponse<Object>> createUser(@RequestBody UserDTO dto) {
-        return userService.createUser(dto);
+    @DeleteMapping("/role/{id}")
+    public ResponseEntity<ApiResponse<Object>> deleteRol( @PathVariable String id) {
+        return apiService.deleteRol(id);
     }
 
-    @GetMapping("/user/")
-    public ResponseEntity<ApiResponse<ResponseZitadelDTO>> getAllUsers() {
-        return userService.getUser(null);
-    }
-
-    @PutMapping("/user/{id}")
-    public String updateUser(@PathVariable String id, @RequestBody Map<String, Object> payload) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return "data recibidos";
+    @GetMapping("/user")
+    public ResponseEntity<ApiResponse<ResponseZitadelDTO>> allUsers() {
+        return apiService.getUser(null);
     }
 
     @PostMapping("/user")
-    public ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(@RequestBody UserIdRequest dto) {
-        logger.debug("User ID: " + dto.getUserId());
-        return userService.getUser(dto.getUserId());
+    public ResponseEntity<ApiResponse<Object>> createUser(@RequestBody UserDTO dto) {
+        return apiService.createUser(dto);
     }
 
-    @PutMapping("/user/update-user")
+    @PutMapping("/user")
     public String updateUser(@RequestBody UpdateUserRequest request) {
-        return userService.updateUser(request);
+        return apiService.updateUser(request);
     }
 
-    @PutMapping("/user/update-passUser")
+    @DeleteMapping("/user/{id}")
+    public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable String id) {
+        return apiService.deleteUser(Long.parseLong(id));
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<ApiResponse<ResponseZitadelDTO>> userById(@PathVariable String id) {
+        return apiService.getUser(id);
+    }
+
+    @PutMapping("/user/password")
     public ResponseEntity<ApiResponsePass> updatePass(@RequestBody Map<String, Object> request) {
-        return userService.updatePass(request);
+        return apiService.updatePass(request);
     }
 
-    @PostMapping("/user/getToken")
-    public String getToken() {
-        return userService.getToken();
-    }
-
-    @DeleteMapping("/user/")
-    public ResponseEntity<ApiResponse<Object>> deleteUser(@RequestBody UserIdRequest request) {
-        return userService.deleteUser(Long.parseLong(request.getUserId()));
-    }
-
-    @PutMapping("/user/desactivate")
-    public ResponseEntity<ApiResponse<Object>> desactivateUser(@RequestBody UserIdRequest request) {
-        return userService.desactivate(Long.valueOf(request.getUserId()));
-    }
-
-    @PutMapping("/user/reactivate")
-    public ResponseEntity<ApiResponse<Object>> reactivateUser(@RequestBody UserIdRequest request) {
-        return userService.reactivate(Long.valueOf(request.getUserId()));
-    }
-
-    @PostMapping("/user/assign-roles")
-    public ResponseEntity<ApiResponse<Object>> assignRolesToUser(@RequestBody RoleGrantRequest data) {
-        return userService.assignRolesToUser(data);
-    }
-
-    @PutMapping("/user/update-roles")
-    public ResponseEntity<ApiResponse<Object>> updateRolesToUser(@RequestBody RoleGrantRequest data) {
-        return userService.updateRolesToUser(data);
-    }
-
-    @PutMapping("/user/update-office")
-    public ResponseEntity<ApiResponse<Object>> updateOfficeAndStaffToUser(@RequestBody OfficeUpdateRequest data) {
-        return userService.updateOfficeAndStaffToUser(data);
-    }
-
-    @PostMapping("/user/CrearBD")
+    @PostMapping("/user/db")
     public ResponseEntity<ApiResponse<Object>> createUserBD(@RequestBody AppUserRequest request) {
-        return userService.createUserBD(request);
+        return apiService.createUserBD(request);
     }
 
-    @PostMapping("/user/dataUserBD")
-    public ResponseEntity<ApiResponse<Object>> getdataExtraUser(@RequestBody UserIdRequest request) {
-        return userService.getdataExtraUser(request.getUserId());
+    @GetMapping("/user/db/{id}")
+    public ResponseEntity<ApiResponse<Object>> userByIdDb(@PathVariable String id) {
+        return apiService.getdataExtraUser(id);
     }
 
-    @PostMapping("/notifications")
-    public ResponseEntity<?> getNotifications() {
-        return ResponseEntity.ok("Token válido, notificación enviada");
+    @PutMapping("/user/des/{id}")
+    public ResponseEntity<ApiResponse<Object>> desactivateUser(@PathVariable String id) {
+        return apiService.desactivate(Long.valueOf(id));
     }
 
+    @PutMapping("/user/act/{id}")
+    public ResponseEntity<ApiResponse<Object>> reactivateUser(@PathVariable String id) {
+        return apiService.reactivate(Long.valueOf(id));
+    }
 
+    @PostMapping("/user/role")
+    public ResponseEntity<ApiResponse<Object>> assignRolesToUser(@RequestBody RoleGrantRequest data) {
+        return apiService.assignRolesToUser(data);
+    }
+
+    @PutMapping("/user/role")
+    public ResponseEntity<ApiResponse<Object>> updateRolesToUser(@RequestBody RoleGrantRequest data) {
+        return apiService.updateRolesToUser(data);
+    }
+
+    @PutMapping("/user/office")
+    public ResponseEntity<ApiResponse<Object>> updateOfficeAndStaffToUser(@RequestBody OfficeUpdateRequest data) {
+        return apiService.updateOfficeAndStaffToUser(data);
+    }
 }

@@ -8,26 +8,29 @@ import org.springframework.http.ResponseEntity;
 import java.util.Map;
 
 public interface ApiService {
+    ResponseEntity<?> getToken(Map<String, String> payload);
+    ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload);
+    ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap);
+    ResponseEntity<String> getProjectRoles();
+
     ResponseEntity<ApiResponse<Object>> getRoles();
     ResponseEntity<ApiResponse<Object>> createRol(RoleRequest data);
     ResponseEntity<ApiResponse<Object>> deleteRol(String roleKey);
     ResponseEntity<ApiResponse<Object>> updateRol(String roleKey, RoleRequest data);
-    ResponseEntity<?> getToken(Map<String, String> payload);
-    ResponseEntity<ApiResponse<Object>> createUser(UserDTO userDTO);
+
     ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(String id);
-    String getToken();
+    ResponseEntity<ApiResponse<Object>> createUser(UserDTO userDTO);
     String updateUser(UpdateUserRequest request);
-    ResponseEntity<ApiResponsePass> updatePass(Map<String, Object> jsonBody);
     ResponseEntity<ApiResponse<Object>> deleteUser(Long userId);
+    ResponseEntity<ApiResponsePass> updatePass(Map<String, Object> jsonBody);
+    ResponseEntity<ApiResponse<Object>> createUserBD(AppUserRequest request);
+    ResponseEntity<ApiResponse<Object>> getdataExtraUser(String userId);
     ResponseEntity<ApiResponse<Object>> desactivate(Long userId);
     ResponseEntity<ApiResponse<Object>> reactivate(Long userId);
-    ResponseEntity<ApiResponse<Object>> getUserById(Long userId);
     ResponseEntity<ApiResponse<Object>> assignRolesToUser(RoleGrantRequest data);
     ResponseEntity<ApiResponse<Object>> updateRolesToUser(RoleGrantRequest data);
-    ResponseEntity<ApiResponse<Object>> createUserBD(AppUserRequest request);
     ResponseEntity<ApiResponse<Object>> updateOfficeAndStaffToUser(OfficeUpdateRequest data);
-    ResponseEntity<ApiResponse<Object>> getdataExtraUser(String userId);
-    ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload);
-    ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap);
-    ResponseEntity<String> getProjectRoles();
+
+    String getToken();
+    ResponseEntity<ApiResponse<Object>> getUserById(Long userId);
 }
