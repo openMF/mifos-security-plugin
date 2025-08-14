@@ -1,7 +1,6 @@
 package org.apache.fineract.infrastructure.zitadel.security.service;
 
 import org.apache.fineract.infrastructure.zitadel.security.api.dto.*;
-import org.apache.fineract.plugins.zitadel.security.api.dto.*;
 import org.apache.fineract.infrastructure.zitadel.security.api.response.ApiResponse;
 import org.apache.fineract.infrastructure.zitadel.security.api.response.ApiResponsePass;
 import org.springframework.http.ResponseEntity;

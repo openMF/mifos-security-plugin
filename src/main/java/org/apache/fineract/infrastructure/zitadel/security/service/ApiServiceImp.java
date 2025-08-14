@@ -12,7 +12,7 @@ import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.core.service.tenant.TenantDetailsService;
 import org.apache.fineract.infrastructure.zitadel.security.api.NoRolesAssignedException;
 import org.apache.fineract.infrastructure.zitadel.security.api.dto.*;
-import org.apache.fineract.plugins.zitadel.security.api.dto.*;
+import org.apache.fineract.infrastructure.zitadel.security.api.dto.*;
 import org.apache.fineract.infrastructure.zitadel.security.api.repository.AppUserService;
 import org.apache.fineract.infrastructure.zitadel.security.api.repository.PermissionService;
 import org.apache.fineract.infrastructure.zitadel.security.api.response.ApiResponse;
