@@ -5,6 +5,7 @@ import org.apache.fineract.infrastructure.zitadel.security.api.response.ApiRespo
 import org.apache.fineract.infrastructure.zitadel.security.api.response.ApiResponsePass;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ApiService {
@@ -12,12 +13,10 @@ public interface ApiService {
     ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload);
     ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap);
     ResponseEntity<String> getProjectRoles();
-
     ResponseEntity<ApiResponse<Object>> getRoles();
     ResponseEntity<ApiResponse<Object>> createRol(RoleRequest data);
     ResponseEntity<ApiResponse<Object>> deleteRol(String roleKey);
     ResponseEntity<ApiResponse<Object>> updateRol(String roleKey, RoleRequest data);
-
     ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(String id);
     ResponseEntity<ApiResponse<Object>> createUser(UserDTO userDTO);
     String updateUser(UpdateUserRequest request);
@@ -30,7 +29,8 @@ public interface ApiService {
     ResponseEntity<ApiResponse<Object>> assignRolesToUser(RoleGrantRequest data);
     ResponseEntity<ApiResponse<Object>> updateRolesToUser(RoleGrantRequest data);
     ResponseEntity<ApiResponse<Object>> updateOfficeAndStaffToUser(OfficeUpdateRequest data);
-
     String getToken();
     ResponseEntity<ApiResponse<Object>> getUserById(Long userId);
+    String afterStartup();
+    String afterStartupUser(List<UserZitadelDto> allUsers);
 }

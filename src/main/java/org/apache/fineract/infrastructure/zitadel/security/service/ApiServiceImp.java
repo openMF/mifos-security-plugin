@@ -1,6 +1,5 @@
 package org.apache.fineract.infrastructure.zitadel.security.service;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -25,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.*;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -36,13 +36,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -68,8 +68,8 @@ public class ApiServiceImp implements ApiService{
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String url;
 
-    @Value("${fineract.plugin.oidc.scope}")
-    private String scopeToken;
+
+    private String scopeToken="openid profile email urn:zitadel:iam:org:project:id:zitadel:aud";
 
     @Value("${fineract.plugin.oidc.service-user.client-id}")
     private String clientId;
@@ -91,6 +91,9 @@ public class ApiServiceImp implements ApiService{
 
     @Value("${fineract.plugin.oidc.opaquetoken.client-id}")
     private String PROJECT_ID;
+
+    @Value("${fineract.default.tenantdb.identifier}")
+    private String TENANTDB;
 
     @Autowired
     private TenantDetailsService tenantDetailsService;
@@ -971,4 +974,85 @@ public class ApiServiceImp implements ApiService{
 
         return response.getBody();
     }
+
+
+    @Override
+    public String afterStartup(){
+        FineractPlatformTenant tenant = tenantDetailsService.loadTenantById(TENANTDB);
+        ThreadLocalContextUtil.setTenant(tenant);
+
+        if (!appUserService.existsColumn("m_appuser", "username_zitadel")) {
+            appUserService.addColumn("m_appuser", "username_zitadel");
+        }
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(getToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        try {
+            ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
+                    uri+"/management/v1/users/_search",
+                    HttpMethod.POST,
+                    entity,
+                    ResponseZitadelDTO.class
+            );
+            ResponseZitadelDTO responseBody = response.getBody();
+            if (responseBody != null && responseBody.getResult() != null) {
+                List<UserZitadelDto> allUsers = responseBody.getResult();
+                return afterStartupUser(allUsers);
+            }
+            return "";
+        } catch (Exception e) {
+            return "ERROR:  "+ e.getMessage();
+        }
+    }
+
+    public String afterStartupUser(List<UserZitadelDto> allUsers){
+        try {
+            if (allUsers == null || allUsers.isEmpty()) {
+                return "empty list";
+            }
+
+            UserZitadelDto lastUser = allUsers.get(allUsers.size() - 1);
+
+            if (appUserService.existsById(lastUser.getId())) {
+                return "existing user";
+            }
+
+            AppUserRequest request = new AppUserRequest();
+            request.setId(lastUser.getId());
+            request.setOfficeId("1");
+            request.setStaffId(null);
+            request.setUsername(lastUser.getUserName());
+
+            if (lastUser.getHuman() != null && lastUser.getHuman().getProfile() != null) {
+                request.setFirstname(lastUser.getHuman().getProfile().getFirstName());
+                request.setLastname(lastUser.getHuman().getProfile().getLastName());
+            } else {
+                request.setFirstname("N/A");
+                request.setLastname("N/A");
+            }
+
+            request.setRoleIds(Arrays.asList("1"));
+
+            appUserService.insertAppUserWithRoles(
+                    request.getId(),
+                    request.getOfficeId(),
+                    request.getStaffId(),
+                    request.getUsername(),
+                    request.getFirstname(),
+                    request.getLastname(),
+                    request.getRoleIds()
+            );
+
+            return "create user";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error: " + e.getMessage();
+        }
+    }
+
+
 }

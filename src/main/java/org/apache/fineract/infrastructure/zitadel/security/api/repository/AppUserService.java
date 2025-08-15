@@ -9,6 +9,7 @@ import org.apache.fineract.infrastructure.zitadel.security.api.dto.RoleGrantRequ
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,6 +29,7 @@ public class AppUserService {
     private final DatabasePasswordEncryptor databasePasswordEncryptor;
     private final Environment environment;
     private final PlatformSecurityContext context;
+
 
     public AppUserService(
             final PlatformSecurityContext context,
@@ -305,6 +307,37 @@ public class AppUserService {
         }
     }
 
+    public boolean existsById(String id) {
+        String schema = getSchema();
+        String sql = """
+    SELECT COUNT(*) FROM %s.m_appuser WHERE id = ?
+""".formatted(schema);
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+        return count != null && count > 0;
+    }
+
+    public boolean existsColumn(String tableName, String columnName) {
+        String schema = getSchema();
+        String sql = """
+    SELECT COUNT(*) 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?
+""";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, schema, tableName, columnName);
+        return count != null && count > 0;
+    }
+
+    public boolean addColumn(String tableName, String columnName) {
+        String schema = getSchema();
+        String sql = """
+    ALTER TABLE %s.%s 
+    ADD COLUMN %s VARCHAR(100) AFTER username
+""".formatted(schema, tableName, columnName);
+
+        jdbcTemplate.execute(sql);
+
+        return existsColumn(tableName, columnName);
+    }
 
 
 }

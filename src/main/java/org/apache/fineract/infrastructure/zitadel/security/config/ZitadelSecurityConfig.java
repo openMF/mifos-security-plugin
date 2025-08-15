@@ -38,7 +38,8 @@ public class ZitadelSecurityConfig {
                         "/fineract-provider/**",
                         "/token",
                         "/authentication/**",
-                        "/userdetails"
+                        "/userdetails",
+                        "/ini"
                 )
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
