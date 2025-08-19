@@ -1,24 +1,24 @@
 package org.apache.fineract.infrastructure.zitadel.security.api.repository;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
-import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor;
+import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.zitadel.security.api.dto.OfficeUpdateRequest;
 import org.apache.fineract.infrastructure.zitadel.security.api.dto.RoleGrantRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
-import javax.sql.DataSource;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class AppUserService {
@@ -202,6 +202,9 @@ public class AppUserService {
         getSchema();
 
         String schema = getSchema();
+
+        String normalizedStaffId = (staffId != null && !staffId.isBlank()) ? staffId : null;
+        
         String insertUserSql = """
             INSERT INTO %s.m_appuser
             (id, office_id, staff_id, username, username_zitadel, firstname, lastname, password, email,
@@ -210,17 +213,17 @@ public class AppUserService {
         """.formatted(schema);
 
         jdbcTemplate.update(
-                insertUserSql,
-                id,
-                officeId,
-                staffId,
-                id,                
-                usernameZitadel,  
-                firstname,
-                lastname,
-                "",              
-                ""              
-        );
+            insertUserSql,
+            id,
+            officeId,
+            (staffId == null || staffId.isBlank()) ? null : staffId,
+            id,
+            usernameZitadel,
+            firstname,
+            lastname,
+            "",
+            ""
+    );
 
         String insertRoleSql = """
             INSERT INTO %s.m_appuser_role (appuser_id, role_id)
