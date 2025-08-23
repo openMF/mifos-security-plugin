@@ -22,6 +22,7 @@ import org.apache.fineract.infrastructure.zitadel.security.api.dto.UserDetailsDT
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
@@ -30,6 +31,11 @@ public class SecurityController {
 
     @Autowired
     ApiService apiService;
+    
+    @PostMapping("/session/manage")
+    public ResponseEntity<?> handleSession(@RequestHeader Map<String, String> headers, @RequestBody String payload) {
+        return apiService.handleSession(headers, payload);
+    }
 
     @PostMapping("/token")
     public ResponseEntity<?> token(@RequestBody Map<String, String> payload) {

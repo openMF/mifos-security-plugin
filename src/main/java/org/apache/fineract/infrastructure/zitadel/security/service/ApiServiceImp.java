@@ -1,6 +1,7 @@
 package org.apache.fineract.infrastructure.zitadel.security.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -10,7 +11,6 @@ import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.core.service.tenant.TenantDetailsService;
 import org.apache.fineract.infrastructure.zitadel.security.api.NoRolesAssignedException;
-import org.apache.fineract.infrastructure.zitadel.security.api.dto.*;
 import org.apache.fineract.infrastructure.zitadel.security.api.dto.*;
 import org.apache.fineract.infrastructure.zitadel.security.api.repository.AppUserService;
 import org.apache.fineract.infrastructure.zitadel.security.api.repository.PermissionService;
@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.*;
-import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -41,13 +39,35 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
 
 @Slf4j
 @Service
 public class ApiServiceImp implements ApiService{
+    
+    private static final Logger logger = LoggerFactory.getLogger(ApiServiceImp.class);
 
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -61,15 +81,13 @@ public class ApiServiceImp implements ApiService{
     @Autowired
     private TokenMapper tokenMapper;
 
-
     @Value("${fineract.plugin.oidc.project.id}")
     private String projectId;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-    private String url;
+    private String INSTANCE_URL;
 
-
-    private String scopeToken="openid profile email urn:zitadel:iam:org:project:id:zitadel:aud";
+    private final String scopeToken="openid profile email urn:zitadel:iam:org:project:id:zitadel:aud";
 
     @Value("${fineract.plugin.oidc.service-user.client-id}")
     private String clientId;
@@ -79,9 +97,6 @@ public class ApiServiceImp implements ApiService{
 
     @Value("${fineract.plugin.oidc.project.grant-id}")
     private String projectGrantId;
-
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-    private String uri;
 
     @Value("${fineract.plugin.oidc.frontend-url}")
     private String frontUrl;
@@ -94,6 +109,18 @@ public class ApiServiceImp implements ApiService{
 
     @Value("${fineract.default.tenantdb.identifier}")
     private String TENANTDB;
+    
+    @Value("${fineract.plugin.oidc.signing-key}")
+    private String SIGNING_KEY;
+
+    @Value("${fineract.plugin.oidc.pat}")
+    private String PAT;
+
+    @Value("${fineract.plugin.oidc.concurrent-sessions}")
+    private int MAX_CONCURRENT_SESSIONS;
+    
+    private final ObjectMapper mapper = new ObjectMapper();
+    
 
     @Autowired
     private TenantDetailsService tenantDetailsService;
@@ -118,8 +145,8 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<Object>> getRoles() {
         try {
 
-            String url = uri+"/management/v1/projects/" + projectId + "/roles/_search";
-            RestTemplate restTemplate = new RestTemplate();
+            String url = INSTANCE_URL+"/management/v1/projects/" + projectId + "/roles/_search";
+//            RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(getToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -144,8 +171,8 @@ public class ApiServiceImp implements ApiService{
     @Override
     public ResponseEntity<ApiResponse<Object>> createRol(RoleRequest data) {
         try {
-            String url = uri+"/management/v1/projects/" + projectId + "/roles";
-            RestTemplate restTemplate = new RestTemplate();
+            String url = INSTANCE_URL+"/management/v1/projects/" + projectId + "/roles";
+            //RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(getToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -173,9 +200,9 @@ public class ApiServiceImp implements ApiService{
     @Override
     public ResponseEntity<ApiResponse<Object>> deleteRol(String roleKey) {
         try {
-            String url = uri+"/management/v1/projects/" + projectId + "/roles/" + roleKey;
+            String url = INSTANCE_URL+"/management/v1/projects/" + projectId + "/roles/" + roleKey;
 
-            RestTemplate restTemplate = new RestTemplate();
+            //RestTemplate restTemplate = new RestTemplate();
 
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(getToken());
@@ -206,9 +233,9 @@ public class ApiServiceImp implements ApiService{
     @Override
     public ResponseEntity<ApiResponse<Object>> updateRol(String roleKey, RoleRequest data) {
         try {
-            String url = uri+"/management/v1/projects/" + projectId + "/roles/" + roleKey;
+            String url = INSTANCE_URL+"/management/v1/projects/" + projectId + "/roles/" + roleKey;
 
-            RestTemplate restTemplate = new RestTemplate();
+            //RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(getToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -235,6 +262,97 @@ public class ApiServiceImp implements ApiService{
                     .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
         }
     }
+    
+    @Override
+    public ResponseEntity<String> handleSession(Map<String, String> headers, String payload) {
+
+        // --- 1. Signature validation ---
+        String signatureHeader = headers.get("zitadel-signature");
+        if (signatureHeader == null) {
+            logger.error("Missing signature");
+            return ResponseEntity.badRequest().body("Missing signature");
+        }
+
+        String[] parts = signatureHeader.split(",");
+        String timestamp = Arrays.stream(parts)
+                                 .filter(p -> p.startsWith("t="))
+                                 .findFirst()
+                                 .map(p -> p.substring(2))
+                                 .orElse(null);
+        String signature = Arrays.stream(parts)
+                                 .filter(p -> p.startsWith("v1="))
+                                 .findFirst()
+                                 .map(p -> p.substring(3))
+                                 .orElse(null);
+
+        if (timestamp == null || signature == null) {
+            logger.error("Malformed signature header");
+            return ResponseEntity.badRequest().body("Malformed signature header");
+        }
+
+        String signedPayload = timestamp + "." + payload;
+        String computed = hmacSha256Hex(signedPayload, SIGNING_KEY);
+
+        if (!secureCompare(computed, signature)) {
+            logger.error("Invalid signature");
+            return ResponseEntity.badRequest().body("Invalid signature");
+        }
+
+        // --- 2. Parse payload and build search request ---
+        try {
+            JsonNode body = mapper.readTree(payload);
+            String userId = body.at("/request/checks/user/userId").asText();
+
+            String searchUrl = INSTANCE_URL + "/v2/sessions/search";
+
+            String newPayload = """
+                    {
+                      "queries": [
+                        {
+                          "userIdQuery": {
+                            "id": "%s"
+                          }
+                        }
+                      ]
+                    }
+                    """.formatted(userId);
+
+            HttpHeaders h = new HttpHeaders();
+            h.setContentType(MediaType.APPLICATION_JSON);
+            h.setBearerAuth(PAT);
+
+            ResponseEntity<JsonNode> resp = restTemplate.exchange(
+                    searchUrl,
+                    HttpMethod.POST,
+                    new HttpEntity<>(newPayload, h),
+                    JsonNode.class);
+
+            List<ApiServiceImp.Session> sessions = new ArrayList<>();
+            for (JsonNode s : resp.getBody().get("sessions")) {
+                sessions.add(new ApiServiceImp.Session(
+                        s.get("id").asText(),
+                        Instant.parse(s.get("creationDate").asText())));
+            }
+
+            // --- 3. Enforce limit ---
+            if (sessions.size() > MAX_CONCURRENT_SESSIONS) {
+                List<ApiServiceImp.Session> toDelete = sessions.stream()
+                                                 .sorted(Comparator.comparing(ApiServiceImp.Session::creationDate).reversed())
+                                                 .skip(MAX_CONCURRENT_SESSIONS)
+                                                 .collect(Collectors.toList());
+
+                for (ApiServiceImp.Session s : toDelete) {
+                    logger.info("Deleting session ID: " + s.id());
+                    restTemplate.delete(INSTANCE_URL + "/v2/sessions/" + s.id(), h);
+                }
+            }
+            return ResponseEntity.ok("OK");
+
+        } catch (Exception ex) {
+            logger.error("Error: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
     @Override
     public String getToken() {
@@ -251,9 +369,9 @@ public class ApiServiceImp implements ApiService{
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-            RestTemplate restTemplate = new RestTemplate();
+            //RestTemplate restTemplate = new RestTemplate();
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(url.concat("/oauth/v2/token"), request, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(INSTANCE_URL.concat("/oauth/v2/token"), request, Map.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 Map<String, Object> responseBody = response.getBody();
@@ -320,7 +438,7 @@ public class ApiServiceImp implements ApiService{
             RequestBody body = RequestBody.create(json, okhttp3.MediaType.parse("application/json"));
 
             Request request = new Request.Builder()
-                    .url(url.concat("/management/v1/users/human"))
+                    .url(INSTANCE_URL.concat("/management/v1/users/human"))
                     .post(body)
                     .addHeader("Authorization", "Bearer " + getToken())
                     .addHeader("Content-Type", "application/json")
@@ -345,7 +463,7 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public ResponseEntity<ApiResponse<ResponseZitadelDTO>> getUser(String id) {
-        RestTemplate restTemplate = new RestTemplate();
+        //RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -353,7 +471,7 @@ public class ApiServiceImp implements ApiService{
 
         try {
             ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
-                    uri+"/management/v1/users/_search",
+                    INSTANCE_URL+"/management/v1/users/_search",
                     HttpMethod.POST,
                     entity,
                     ResponseZitadelDTO.class
@@ -387,7 +505,7 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public String updateUser(UpdateUserRequest req) {
-        String baseUrl = uri + "/v2/users/";
+        String baseUrl = INSTANCE_URL + "/v2/users/";
         StringBuilder result = new StringBuilder();
 
         if (req.email != null) {
@@ -435,7 +553,7 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public ResponseEntity<ApiResponsePass> updatePass(Map<String, Object> jsonBody) {
-        String baseUrl = uri + "/v2/users/";
+        String baseUrl = INSTANCE_URL + "/v2/users/";
         String userId = (String) jsonBody.get("userId");
         String token = getToken();
 
@@ -500,7 +618,7 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public ResponseEntity<ApiResponse<Object>> deleteUser(Long userId) {
-        RestTemplate restTemplate = new RestTemplate();
+        //RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -508,7 +626,7 @@ public class ApiServiceImp implements ApiService{
 
         try {
             ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
-                    uri+"/v2/users/" + userId,
+                    INSTANCE_URL+"/v2/users/" + userId,
                     HttpMethod.DELETE,
                     entity,
                     ResponseZitadelDTO.class
@@ -525,7 +643,7 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public ResponseEntity<ApiResponse<Object>> desactivate(Long userId) {
-        RestTemplate restTemplate = new RestTemplate();
+        //RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -533,7 +651,7 @@ public class ApiServiceImp implements ApiService{
 
         try {
             ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
-                    uri+"/v2/users/" + userId + "/deactivate",
+                    INSTANCE_URL+"/v2/users/" + userId + "/deactivate",
                     HttpMethod.POST,
                     entity,
                     ResponseZitadelDTO.class
@@ -554,7 +672,7 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public ResponseEntity<ApiResponse<Object>> reactivate(Long userId) {
-        RestTemplate restTemplate = new RestTemplate();
+        //RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -562,7 +680,7 @@ public class ApiServiceImp implements ApiService{
 
         try {
             ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
-                    uri+"/v2/users/" + userId + "/reactivate",
+                    INSTANCE_URL+"/v2/users/" + userId + "/reactivate",
                     HttpMethod.POST,
                     entity,
                     ResponseZitadelDTO.class
@@ -583,7 +701,7 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getUserById(Long userId) {
-        RestTemplate restTemplate = new RestTemplate();
+        //RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(getToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -591,7 +709,7 @@ public class ApiServiceImp implements ApiService{
 
         try {
             ResponseEntity<Object> response = restTemplate.exchange(
-                    uri+"/v2/users/" + userId, HttpMethod.GET, entity, Object.class
+                    INSTANCE_URL+"/v2/users/" + userId, HttpMethod.GET, entity, Object.class
             );
 
             return ResponseEntity.ok(
@@ -611,9 +729,9 @@ public class ApiServiceImp implements ApiService{
     public ResponseEntity<ApiResponse<Object>> assignRolesToUser(RoleGrantRequest data) {
 
         String userId = data.getUserId();
-        String urlAssign = uri+"/management/v1/users/" + userId + "/grants";
+        String urlAssign = INSTANCE_URL+"/management/v1/users/" + userId + "/grants";
 
-        RestTemplate restTemplate = new RestTemplate();
+        //RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(getToken());
@@ -634,7 +752,7 @@ public class ApiServiceImp implements ApiService{
 
             if (e.getStatusCode() == HttpStatus.CONFLICT && body.contains("User grant already exists")) {
                 try {
-                    String urlSearch = uri+"/management/v1/users/grants/_search";
+                    String urlSearch = INSTANCE_URL+"/management/v1/users/grants/_search";
 
                     JSONObject searchPayload = new JSONObject();
                     JSONArray queries = new JSONArray();
@@ -667,7 +785,7 @@ public class ApiServiceImp implements ApiService{
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse<>(400, "Could not find existing grant to update", null));
                     }
-                    String updateUrl = uri+"/management/v1/users/" + userId + "/grants/" + grantIdToUpdate;
+                    String updateUrl = INSTANCE_URL+"/management/v1/users/" + userId + "/grants/" + grantIdToUpdate;
 
                     JSONObject updatePayload = new JSONObject();
                     updatePayload.put("projectId", projectId);
@@ -868,7 +986,7 @@ public class ApiServiceImp implements ApiService{
             HttpClient client = HttpClient.newHttpClient();
 
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(URI.create(uri + "/oauth/v2/token"))
+                    .uri(URI.create(INSTANCE_URL + "/oauth/v2/token"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
@@ -906,7 +1024,7 @@ public class ApiServiceImp implements ApiService{
         try {
             HttpClient client = HttpClient.newHttpClient();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(URI.create(uri+"/oidc/v1/userinfo"))
+                    .uri(URI.create(INSTANCE_URL+"/oidc/v1/userinfo"))
                     .header("Authorization", "Bearer " + token)
                     .GET()
                     .build();
@@ -961,7 +1079,7 @@ public class ApiServiceImp implements ApiService{
     }
 
     public String getRolesFromZitadel(String accessToken, String projectId) {
-        String url = uri+"/management/v1/projects/" + projectId + "/roles";
+        String url = INSTANCE_URL+"/management/v1/projects/" + projectId + "/roles";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
@@ -992,7 +1110,7 @@ public class ApiServiceImp implements ApiService{
         HttpEntity<String> entity = new HttpEntity<>(headers);
         try {
             ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
-                    uri+"/management/v1/users/_search",
+                    INSTANCE_URL+"/management/v1/users/_search",
                     HttpMethod.POST,
                     entity,
                     ResponseZitadelDTO.class
@@ -1053,6 +1171,32 @@ public class ApiServiceImp implements ApiService{
             return "error: " + e.getMessage();
         }
     }
+    
+    // helpers ---------------------------------------------------------
+
+    private static String hmacSha256Hex(String data, String secret) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            return bytesToHex(hash);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) sb.append(String.format("%02x", b));
+        return sb.toString();
+    }
+
+    private static boolean secureCompare(String a, String b) {
+        return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8),
+                                     b.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private record Session(String id, Instant creationDate) {}
 
 
 }

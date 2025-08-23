@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface ApiService {
+    ResponseEntity<?> handleSession(Map<String, String> headers, String payload);
     ResponseEntity<?> getToken(Map<String, String> payload);
     ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload);
     ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap);
