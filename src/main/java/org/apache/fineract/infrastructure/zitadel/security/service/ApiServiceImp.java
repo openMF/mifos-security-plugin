@@ -93,7 +93,7 @@ public class ApiServiceImp implements ApiService{
     private String clientId;
 
     @Value("${fineract.plugin.oidc.service-user.client-secret}")
-    private String client_secret;
+    private String CLIENT_SECRET;
 
     @Value("${fineract.plugin.oidc.project.grant-id}")
     private String projectGrantId;
@@ -113,8 +113,8 @@ public class ApiServiceImp implements ApiService{
     @Value("${fineract.plugin.oidc.signing-key}")
     private String SIGNING_KEY;
 
-    @Value("${fineract.plugin.oidc.pat}")
-    private String PAT;
+    //@Value("${fineract.plugin.oidc.pat}")
+    //private String PAT;
 
     @Value("${fineract.plugin.oidc.concurrent-sessions}")
     private int MAX_CONCURRENT_SESSIONS;
@@ -319,7 +319,7 @@ public class ApiServiceImp implements ApiService{
 
             HttpHeaders h = new HttpHeaders();
             h.setContentType(MediaType.APPLICATION_JSON);
-            h.setBearerAuth(PAT);
+            h.setBearerAuth(CLIENT_SECRET);
 
             ResponseEntity<JsonNode> resp = restTemplate.exchange(
                     searchUrl,
@@ -364,7 +364,7 @@ public class ApiServiceImp implements ApiService{
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("grant_type", "client_credentials");
             body.add("client_id", clientId);
-            body.add("client_secret", client_secret);
+            body.add("client_secret", CLIENT_SECRET);
             body.add("scope", scopeToken);
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
