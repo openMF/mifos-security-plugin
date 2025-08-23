@@ -16,26 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.infrastructure.zitadel.security;
+package org.apache.fineract.infrastructure.zitadel.security.validator;
 
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
-import org.springframework.security.oauth2.jwt.JwtException;
+import java.util.Map;
 
-public class ZitadelTokenValidator {
+public class ZitadelRoleValidator {
 
-    private final JwtDecoder jwtDecoder;
+    private static final String CLAIM_NAME = "urn:zitadel:iam:org:project:roles";
 
-    public ZitadelTokenValidator(String issuerUri) {
-        this.jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
-    }
+    public static boolean hasRole(Jwt jwt, String expectedRole) {
+        Object rolesClaim = jwt.getClaims().get(CLAIM_NAME);
 
-    public Jwt validate(String token) {
-        try {
-            return jwtDecoder.decode(token);
-        } catch (JwtException e) {
-            throw new RuntimeException("Invalid JWT Token: "+ e.getMessage(), e);
+        if (rolesClaim instanceof Map<?, ?> map) {
+            for (Object orgEntry : map.values()) {
+                if (orgEntry instanceof Map<?, ?> innerMap) {
+                    for (Object roleValue : innerMap.values()) {
+                        if (expectedRole.equals(roleValue)) {
+                            return true;
+                        }
+                    }
+                }
+            }
         }
+        return false;
     }
+
 }
+
