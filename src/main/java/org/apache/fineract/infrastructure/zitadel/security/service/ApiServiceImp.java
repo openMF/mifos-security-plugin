@@ -972,7 +972,7 @@ public class ApiServiceImp implements ApiService{
             String code = payload.get("code");
             String codeVerifier = payload.get("code_verifier");
 
-            String redirectUri = frontUrl.replaceAll("/$", "") + "/#/login";
+            String redirectUri = frontUrl.replaceAll("/$", "") + "/#/callback";
 
             String requestBody = "grant_type=authorization_code"
                     + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
@@ -980,7 +980,7 @@ public class ApiServiceImp implements ApiService{
                     + "&client_id=" + URLEncoder.encode(CLIENT_ID, StandardCharsets.UTF_8)
                     + "&code_verifier=" + URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8)
                     + "&scope=" + URLEncoder.encode(
-                    "openid profile email offline_access urn:zitadel:iam:org:project:321191693166617589:roles",
+                    "openid profile email offline_access urn:zitadel:iam:org:project:"+projectId+":roles",
                     StandardCharsets.UTF_8);
 
             HttpClient client = HttpClient.newHttpClient();
