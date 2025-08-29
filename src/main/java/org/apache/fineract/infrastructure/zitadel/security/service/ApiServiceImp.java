@@ -109,16 +109,7 @@ public class ApiServiceImp implements ApiService{
 
     @Value("${fineract.default.tenantdb.identifier}")
     private String TENANTDB;
-    
-    @Value("${fineract.plugin.oidc.signing-key}")
-    private String SIGNING_KEY;
 
-    //@Value("${fineract.plugin.oidc.pat}")
-    //private String PAT;
-
-    @Value("${fineract.plugin.oidc.concurrent-sessions}")
-    private int MAX_CONCURRENT_SESSIONS;
-    
     private final ObjectMapper mapper = new ObjectMapper();
     
 
@@ -260,97 +251,6 @@ public class ApiServiceImp implements ApiService{
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(500, "Unexpected error: " + e.getMessage(), null));
-        }
-    }
-    
-    @Override
-    public ResponseEntity<String> handleSession(Map<String, String> headers, String payload) {
-
-        // --- 1. Signature validation ---
-        String signatureHeader = headers.get("zitadel-signature");
-        if (signatureHeader == null) {
-            logger.error("Missing signature");
-            return ResponseEntity.badRequest().body("Missing signature");
-        }
-
-        String[] parts = signatureHeader.split(",");
-        String timestamp = Arrays.stream(parts)
-                                 .filter(p -> p.startsWith("t="))
-                                 .findFirst()
-                                 .map(p -> p.substring(2))
-                                 .orElse(null);
-        String signature = Arrays.stream(parts)
-                                 .filter(p -> p.startsWith("v1="))
-                                 .findFirst()
-                                 .map(p -> p.substring(3))
-                                 .orElse(null);
-
-        if (timestamp == null || signature == null) {
-            logger.error("Malformed signature header");
-            return ResponseEntity.badRequest().body("Malformed signature header");
-        }
-
-        String signedPayload = timestamp + "." + payload;
-        String computed = hmacSha256Hex(signedPayload, SIGNING_KEY);
-
-        if (!secureCompare(computed, signature)) {
-            logger.error("Invalid signature");
-            return ResponseEntity.badRequest().body("Invalid signature");
-        }
-
-        // --- 2. Parse payload and build search request ---
-        try {
-            JsonNode body = mapper.readTree(payload);
-            String userId = body.at("/request/checks/user/userId").asText();
-
-            String searchUrl = INSTANCE_URL + "/v2/sessions/search";
-
-            String newPayload = """
-                    {
-                      "queries": [
-                        {
-                          "userIdQuery": {
-                            "id": "%s"
-                          }
-                        }
-                      ]
-                    }
-                    """.formatted(userId);
-
-            HttpHeaders h = new HttpHeaders();
-            h.setContentType(MediaType.APPLICATION_JSON);
-            h.setBearerAuth(CLIENT_SECRET);
-
-            ResponseEntity<JsonNode> resp = restTemplate.exchange(
-                    searchUrl,
-                    HttpMethod.POST,
-                    new HttpEntity<>(newPayload, h),
-                    JsonNode.class);
-
-            List<ApiServiceImp.Session> sessions = new ArrayList<>();
-            for (JsonNode s : resp.getBody().get("sessions")) {
-                sessions.add(new ApiServiceImp.Session(
-                        s.get("id").asText(),
-                        Instant.parse(s.get("creationDate").asText())));
-            }
-
-            // --- 3. Enforce limit ---
-            if (sessions.size() > MAX_CONCURRENT_SESSIONS) {
-                List<ApiServiceImp.Session> toDelete = sessions.stream()
-                                                 .sorted(Comparator.comparing(ApiServiceImp.Session::creationDate).reversed())
-                                                 .skip(MAX_CONCURRENT_SESSIONS)
-                                                 .collect(Collectors.toList());
-
-                for (ApiServiceImp.Session s : toDelete) {
-                    logger.info("Deleting session ID: " + s.id());
-                    restTemplate.delete(INSTANCE_URL + "/v2/sessions/" + s.id(), h);
-                }
-            }
-            return ResponseEntity.ok("OK");
-
-        } catch (Exception ex) {
-            logger.error("Error: " + ex.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

@@ -8,8 +8,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 import java.util.Map;
 
-public interface ApiService {
-    ResponseEntity<?> handleSession(Map<String, String> headers, String payload);
+public interface ApiService {    
     ResponseEntity<?> getToken(Map<String, String> payload);
     ResponseEntity<ApiResponse<UserDetailsDTO>> mapToken(Map<String, Object> tokenPayload);
     ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap);

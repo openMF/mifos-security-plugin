@@ -31,11 +31,6 @@ public class SecurityController {
 
     @Autowired
     ApiService apiService;
-    
-    @PostMapping("/session/manage")
-    public ResponseEntity<?> handleSession(@RequestHeader Map<String, String> headers, @RequestBody String payload) {
-        return apiService.handleSession(headers, payload);
-    }
 
     @PostMapping("/token")
     public ResponseEntity<?> token(@RequestBody Map<String, String> payload) {
