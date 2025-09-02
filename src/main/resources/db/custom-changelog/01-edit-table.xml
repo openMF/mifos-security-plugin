@@ -3,10 +3,10 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="
-        http://www.liquibase.org/xml/ns/dbchangelog
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <changeSet id="001-add-username-zitadel-column" author="pluginzitadel" context="zitadel">
+    <changeSet id="001-add-username-zitadel-column" author="pluginzitadel">
         <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="m_appuser" columnName="username_zitadel"/>
@@ -14,7 +14,7 @@
         </preConditions>
 
         <addColumn tableName="m_appuser">
-            <column name="username_zitadel" type="VARCHAR(100)" afterColumn="username"/>
+            <column name="username_zitadel" type="VARCHAR(100)"/>
         </addColumn>
     </changeSet>
 
