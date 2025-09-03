@@ -37,6 +37,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -84,7 +85,7 @@ public class ApiServiceImp implements ApiService{
     @Value("${fineract.plugin.oidc.project.id}")
     private String projectId;
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    @Value("${FINERACT.SERVER.OAUTH.RESOURCE.URL}")
     private String INSTANCE_URL;
 
     private final String scopeToken="openid profile email urn:zitadel:iam:org:project:id:zitadel:aud";
@@ -911,60 +912,99 @@ public class ApiServiceImp implements ApiService{
 
     @Override
     public ResponseEntity<ApiResponse<UserDetailsDTO>> userDetails(Map<String, String> tokenMap) {
+        FineractPlatformTenant tenant = tenantDetailsService.loadTenantById(TENANTDB);
+        ThreadLocalContextUtil.setTenant(tenant);
         String token = tokenMap.get("token");
         UserDetailsDTO userDetails = new UserDetailsDTO();
 
         if (token == null || token.isEmpty()) {
-    return ResponseEntity.ok(
-        new ApiResponse<>(500, "Null authentication token", null)
-    );
-}
-
+            System.out.println("[FLAG-1] Token es nulo o vacío");
+            return ResponseEntity.ok(
+                    new ApiResponse<>(500, "Null authentication token", null)
+            );
+        }
 
         try {
+            System.out.println("[FLAG-2] Token recibido: " + token);
+
             HttpClient client = HttpClient.newHttpClient();
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(URI.create(INSTANCE_URL+"/oidc/v1/userinfo"))
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(INSTANCE_URL + "/oidc/v1/userinfo"))
                     .header("Authorization", "Bearer " + token)
                     .GET()
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("[FLAG-3] Respuesta OIDC status: " + response.statusCode());
+            System.out.println("[FLAG-4] Respuesta body: " + response.body());
 
             if (response.statusCode() != 200) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        .body(new ApiResponse<>(400, "Failed to fetch userinfo from OIDC endpoint", null));
-}
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(400, "Failed to fetch user info from OIDC endpoint", null));
+            }
 
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> userInfo = objectMapper.readValue(response.body(), new TypeReference<>() {});
+            System.out.println("[FLAG-5] userInfo: " + userInfo);
 
-            Map<?, ?> rolesId = (Map<?, ?>) userInfo.get("urn:zitadel:iam:org:project:roles");
-            List<String> roleNames1 = rolesId.keySet().stream()
+            Map<?, ?> rolesMap = (Map<?, ?>) userInfo.get("urn:zitadel:iam:org:project:roles");
+            System.out.println("[FLAG-6] Roles en token: " + rolesMap);
+
+            List<String> roleNames = rolesMap.keySet().stream()
                     .map(Object::toString)
                     .collect(Collectors.toList());
+            System.out.println("[FLAG-7] roleNames: " + roleNames);
 
+            List<RoleDTO> roleDTOs = permissionService.getRoles(roleNames);
+            List<String> dbPermissions = permissionService.getPermissionsFromRoles(roleNames);
 
-            List<RoleDTO> roleDTOS = permissionService.getRoles(roleNames1);
-            List<String> permisosDesdeBD = permissionService.getPermissionsFromRoles(roleNames1);
+            String name = (String) userInfo.get("name");
+            String sub = (String) userInfo.get("sub");
+            System.out.println("[FLAG-8] name: " + name + " | sub: " + sub);
 
-            userDetails.setUsername(userInfo.get("name").toString());
-            userDetails.setUserId(Long.parseLong(userInfo.get("sub").toString()));
+            userDetails.setUsername(name);
+            try {
+                userDetails.setUserId(Long.parseLong(sub));
+            } catch (NumberFormatException nfe) {
+                System.out.println("[FLAG-9] ERROR al parsear sub: " + sub + " a Long");
+                throw nfe;
+            }
 
             userDetails.setAuthenticated(true);
-            userDetails.setOfficeId(1);
-            userDetails.setOfficeName("office_name");
-            userDetails.setRoles(roleDTOS);
-            userDetails.setPermissions(permisosDesdeBD);
+
+            try {
+                Map<String, Object> office = permissionService.getOfficeByUserId(userDetails.getUserId());
+                System.out.println("[FLAG-10] office: " + office);
+
+                if (office != null && !office.isEmpty()) {
+                    userDetails.setOfficeId(((Number) office.get("id")).intValue());
+                    userDetails.setOfficeName((String) office.get("name"));
+                } else {
+                    throw new RuntimeException("Error retrieving office for user: " + userDetails.getUserId());
+                }
+            } catch (Exception e) {
+                System.out.println("[FLAG-11] Error al obtener oficina: " + e.getMessage());
+                throw new RuntimeException("Error getting office: " + e.getMessage());
+            }
+
+            userDetails.setRoles(roleDTOs);
+            userDetails.setPermissions(dbPermissions);
             userDetails.setShouldRenewPassword(false);
             userDetails.setTwoFactorAuthenticationRequired(false);
+
+            System.out.println("[FLAG-12] userDetails final: " + userDetails);
 
             return ResponseEntity.ok(new ApiResponse<>(200, "ok", userDetails));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(500, "Unexpected error while fetching userinfo", null));
+            System.out.println("[FLAG-13] Excepción general: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(500, "Unexpected error while fetching user info", null));
         }
     }
+
+
 
     @Override
     public ResponseEntity<String> getProjectRoles() {
@@ -998,32 +1038,35 @@ public class ApiServiceImp implements ApiService{
     public String afterStartup(){
         FineractPlatformTenant tenant = tenantDetailsService.loadTenantById(TENANTDB);
         ThreadLocalContextUtil.setTenant(tenant);
-
-        if (!appUserService.existsColumn("m_appuser", "username_zitadel")) {
-            appUserService.addColumn("m_appuser", "username_zitadel");
-        }
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(getToken());
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        try {
-            ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
-                    INSTANCE_URL+"/management/v1/users/_search",
-                    HttpMethod.POST,
-                    entity,
-                    ResponseZitadelDTO.class
-            );
-            ResponseZitadelDTO responseBody = response.getBody();
-            if (responseBody != null && responseBody.getResult() != null) {
-                List<UserZitadelDto> allUsers = responseBody.getResult();
-                return afterStartupUser(allUsers);
+        try{
+            if (appUserService.existsColumn("m_appuser", "username_zitadel")) {
+                RestTemplate restTemplate = new RestTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBearerAuth(getToken());
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<String> entity = new HttpEntity<>(headers);
+                try {
+                    ResponseEntity<ResponseZitadelDTO> response = restTemplate.exchange(
+                            INSTANCE_URL+"/management/v1/users/_search",
+                            HttpMethod.POST,
+                            entity,
+                            ResponseZitadelDTO.class
+                    );
+                    ResponseZitadelDTO responseBody = response.getBody();
+                    if (responseBody != null && responseBody.getResult() != null) {
+                        List<UserZitadelDto> allUsers = responseBody.getResult();
+                        return afterStartupUser(allUsers);
+                    }
+                    return "";
+                } catch (Exception e) {
+                    return "ERROR:  "+ e.getMessage();
+                }
             }
-            return "";
-        } catch (Exception e) {
+
+        }catch (Exception e){
             return "ERROR:  "+ e.getMessage();
         }
+        return "";
     }
 
     public String afterStartupUser(List<UserZitadelDto> allUsers){

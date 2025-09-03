@@ -11,7 +11,7 @@ public class SecurityConfigDebugger {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfigDebugger.class);
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    @Value("${FINERACT.SERVER.OAUTH.RESOURCE.URL}")
     private String issuerUri;
 
     @PostConstruct

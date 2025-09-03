@@ -330,17 +330,17 @@ public class AppUserService {
         return count != null && count > 0;
     }
 
-    public boolean addColumn(String tableName, String columnName) {
-        String schema = getSchema();
-        String sql = """
-    ALTER TABLE %s.%s 
-    ADD COLUMN %s VARCHAR(100) AFTER username
-""".formatted(schema, tableName, columnName);
-
-        jdbcTemplate.execute(sql);
-
-        return existsColumn(tableName, columnName);
-    }
+//    public boolean addColumn(String tableName, String columnName) {
+//        String schema = getSchema();
+//        String sql = """
+//    ALTER TABLE %s.%s
+//    ADD COLUMN %s VARCHAR(100) AFTER username
+//""".formatted(schema, tableName, columnName);
+//
+//        jdbcTemplate.execute(sql);
+//
+//        return existsColumn(tableName, columnName);
+//    }
 
 
 }

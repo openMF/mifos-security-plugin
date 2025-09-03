@@ -27,7 +27,7 @@ public class ZitadelSecurityConfig {
     @Value("${fineract.plugin.oidc.frontend-url}")
     private String frontUrl;
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    @Value("${FINERACT.SERVER.OAUTH.RESOURCE.URL}")
     private String uri;
 
     @Bean

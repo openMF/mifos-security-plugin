@@ -39,72 +39,84 @@ public class TokenMapper {
     @Autowired
     private PermissionService permissionService;
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    @Value("${FINERACT.SERVER.OAUTH.RESOURCE.URL}")
     private String uri;
 
     public UserDetailsDTO mapTokenToUserDetails(Map<String, Object> tokenMap) {
-        UserDetailsDTO userDetails = new UserDetailsDTO();
-        List<String> permisos = new ArrayList<>();
+    UserDetailsDTO userDetails = new UserDetailsDTO();
+    List<String> permissions = new ArrayList<>();
 
-        String accessToken = (String) tokenMap.getOrDefault("access_token", null);
+    String accessToken = (String) tokenMap.getOrDefault("access_token", null);
 
-        if (accessToken == null || accessToken.isEmpty()) {
-            throw new RuntimeException("Null or invalid token");
+    if (accessToken == null || accessToken.isEmpty()) {
+        throw new RuntimeException("Null or invalid token");
+    }
+
+    try {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest userInfoRequest = HttpRequest.newBuilder()
+                .uri(URI.create(uri + "/oidc/v1/userinfo"))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET()
+                .build();
+
+        HttpResponse<String> userInfoResponse = client.send(userInfoRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (userInfoResponse.statusCode() != 200) {
+            throw new RuntimeException("Error fetching user info: HTTP " + userInfoResponse.statusCode());
         }
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> userInfo = mapper.readValue(userInfoResponse.body(), Map.class);
+
+        userDetails.setUsername((String) userInfo.getOrDefault("preferred_username", "unknown"));
+
+        String userId = (String) userInfo.getOrDefault("sub", "0");
+        try {
+            userDetails.setUserId(Long.parseLong(userId));
+        } catch (NumberFormatException ex) {
+            userDetails.setUserId(0L);
+        }
+
+        Map<String, Object> rolesMap = (Map<String, Object>) userInfo.get("urn:zitadel:iam:org:project:roles");
+        List<String> roleNames = (rolesMap != null)
+                ? rolesMap.keySet().stream().map(Object::toString).collect(Collectors.toList())
+                : Collections.emptyList();
+
+        List<RoleDTO> roleDTOs = permissionService.getRoles(roleNames);
+        List<String> dbPermissions = permissionService.getPermissionsFromRoles(roleNames);
+
+        permissions.addAll(dbPermissions);
+        Set<String> uniquePermissions = new HashSet<>(permissions);
+
+        userDetails.setAccessToken(accessToken);
+        userDetails.setAuthenticated(true);
 
         try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest userInfoRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(uri + "/oidc/v1/userinfo"))
-                    .header("Authorization", "Bearer " + accessToken)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> userInfoResponse = client.send(userInfoRequest, HttpResponse.BodyHandlers.ofString());
-
-            if (userInfoResponse.statusCode() != 200) {
-                throw new RuntimeException("Error fetching userinfo: HTTP " + userInfoResponse.statusCode());
+            Map<String, Object> office = permissionService.getOfficeByUserId(userDetails.getUserId());
+            if (office != null && !office.isEmpty()) {
+                userDetails.setOfficeId(((Number) office.get("id")).intValue());
+                userDetails.setOfficeName((String) office.get("name"));
+            } else {
+                throw new RuntimeException("Error retrieving office for user: " + userDetails.getUserId());
             }
-
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> userInfo = mapper.readValue(userInfoResponse.body(), Map.class);
-
-            userDetails.setUsername((String) userInfo.getOrDefault("preferred_username", "unknown"));
-
-            String userId = (String) userInfo.getOrDefault("sub", "0");
-            try {
-                userDetails.setUserId(Long.parseLong(userId));
-            } catch (NumberFormatException ex) {
-                userDetails.setUserId(0L);  
-            }
-
-            Map<String, Object> rolesMap = (Map<String, Object>) userInfo.get("urn:zitadel:iam:org:project:roles");
-            List<String> roleNames = (rolesMap != null)
-                    ? rolesMap.keySet().stream().map(Object::toString).collect(Collectors.toList())
-                    : Collections.emptyList();
-
-            List<RoleDTO> roleDTOS = permissionService.getRoles(roleNames);
-            List<String> permisosDesdeBD = permissionService.getPermissionsFromRoles(roleNames);
-
-            permisos.addAll(permisosDesdeBD);
-            Set<String> permisosUnicos = new HashSet<>(permisos);
-
-            userDetails.setAccessToken(accessToken);
-            userDetails.setAuthenticated(true);
-            userDetails.setOfficeId(1);
-            userDetails.setOfficeName("Head Office");
-            userDetails.setRoles(roleDTOS);
-            userDetails.setPermissions(new ArrayList<>(permisosUnicos));
-            userDetails.setShouldRenewPassword(false);
-            userDetails.setTwoFactorAuthenticationRequired(false);
-
-            return userDetails;
-
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error processing token: " + e.getMessage());
+            throw new RuntimeException("Error getting office: " + e.getMessage());
         }
+
+        userDetails.setRoles(roleDTOs);
+        userDetails.setPermissions(new ArrayList<>(uniquePermissions));
+        userDetails.setShouldRenewPassword(false);
+        userDetails.setTwoFactorAuthenticationRequired(false);
+
+        return userDetails;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException("Error processing token: " + e.getMessage());
     }
+}
+
 
 
 
