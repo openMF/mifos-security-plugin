@@ -918,14 +918,12 @@ public class ApiServiceImp implements ApiService{
         UserDetailsDTO userDetails = new UserDetailsDTO();
 
         if (token == null || token.isEmpty()) {
-            System.out.println("[FLAG-1] Token es nulo o vacío");
             return ResponseEntity.ok(
                     new ApiResponse<>(500, "Null authentication token", null)
             );
         }
 
         try {
-            System.out.println("[FLAG-2] Token recibido: " + token);
 
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -935,8 +933,6 @@ public class ApiServiceImp implements ApiService{
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("[FLAG-3] Respuesta OIDC status: " + response.statusCode());
-            System.out.println("[FLAG-4] Respuesta body: " + response.body());
 
             if (response.statusCode() != 200) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -945,28 +941,23 @@ public class ApiServiceImp implements ApiService{
 
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> userInfo = objectMapper.readValue(response.body(), new TypeReference<>() {});
-            System.out.println("[FLAG-5] userInfo: " + userInfo);
 
             Map<?, ?> rolesMap = (Map<?, ?>) userInfo.get("urn:zitadel:iam:org:project:roles");
-            System.out.println("[FLAG-6] Roles en token: " + rolesMap);
 
             List<String> roleNames = rolesMap.keySet().stream()
                     .map(Object::toString)
                     .collect(Collectors.toList());
-            System.out.println("[FLAG-7] roleNames: " + roleNames);
 
             List<RoleDTO> roleDTOs = permissionService.getRoles(roleNames);
             List<String> dbPermissions = permissionService.getPermissionsFromRoles(roleNames);
 
             String name = (String) userInfo.get("name");
             String sub = (String) userInfo.get("sub");
-            System.out.println("[FLAG-8] name: " + name + " | sub: " + sub);
 
             userDetails.setUsername(name);
             try {
                 userDetails.setUserId(Long.parseLong(sub));
             } catch (NumberFormatException nfe) {
-                System.out.println("[FLAG-9] ERROR al parsear sub: " + sub + " a Long");
                 throw nfe;
             }
 
@@ -974,7 +965,6 @@ public class ApiServiceImp implements ApiService{
 
             try {
                 Map<String, Object> office = permissionService.getOfficeByUserId(userDetails.getUserId());
-                System.out.println("[FLAG-10] office: " + office);
 
                 if (office != null && !office.isEmpty()) {
                     userDetails.setOfficeId(((Number) office.get("id")).intValue());
@@ -983,7 +973,6 @@ public class ApiServiceImp implements ApiService{
                     throw new RuntimeException("Error retrieving office for user: " + userDetails.getUserId());
                 }
             } catch (Exception e) {
-                System.out.println("[FLAG-11] Error al obtener oficina: " + e.getMessage());
                 throw new RuntimeException("Error getting office: " + e.getMessage());
             }
 
@@ -992,12 +981,10 @@ public class ApiServiceImp implements ApiService{
             userDetails.setShouldRenewPassword(false);
             userDetails.setTwoFactorAuthenticationRequired(false);
 
-            System.out.println("[FLAG-12] userDetails final: " + userDetails);
 
             return ResponseEntity.ok(new ApiResponse<>(200, "ok", userDetails));
 
         } catch (Exception e) {
-            System.out.println("[FLAG-13] Excepción general: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(500, "Unexpected error while fetching user info", null));
