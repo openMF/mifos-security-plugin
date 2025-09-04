@@ -942,6 +942,13 @@ public class ApiServiceImp implements ApiService{
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> userInfo = objectMapper.readValue(response.body(), new TypeReference<>() {});
 
+            String sub = (String) userInfo.get("sub");
+
+            if (!appUserService.existsById(sub)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(404, "user not found", null));
+            }
+
             Map<?, ?> rolesMap = (Map<?, ?>) userInfo.get("urn:zitadel:iam:org:project:roles");
 
             List<String> roleNames = rolesMap.keySet().stream()
@@ -952,7 +959,7 @@ public class ApiServiceImp implements ApiService{
             List<String> dbPermissions = permissionService.getPermissionsFromRoles(roleNames);
 
             String name = (String) userInfo.get("name");
-            String sub = (String) userInfo.get("sub");
+
 
             userDetails.setUsername(name);
             try {
