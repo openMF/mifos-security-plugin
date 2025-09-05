@@ -54,7 +54,7 @@ public class AppUserService {
         try (var conn = jdbcTemplate.getDataSource().getConnection()) {
             dbProductName = conn.getMetaData().getDatabaseProductName().toLowerCase();
         } catch (Exception e) {
-            throw new RuntimeException("No se pudo obtener el tipo de base de datos", e);
+            throw new RuntimeException("Could not get database type", e);
         }
         return dbProductName.contains("postgresql") ? SCHEMAPOSTGRES : tenant.getConnection().getSchemaName();
     }
@@ -62,7 +62,6 @@ public class AppUserService {
     public String resolverOfficeId(String userKey) {
         final String schema = getSchema();
         final String key = (userKey == null) ? null : userKey.trim();
-        logger.debug("[resolverOfficeId] schema={}, userKey='{}'", schema, key);
 
         if (key == null || key.isEmpty()) {
             logger.warn("[resolverOfficeId] empty userKey");
@@ -89,8 +88,7 @@ public class AppUserService {
             ps.setString(2, key);
         }, rs -> rs.next() ? String.valueOf(rs.getLong(1)) : null);
 
-        logger.debug("[resolverOfficeId] resultado officeId={}", officeId);
-        logger.debug("[resolverOfficeId] schema=" + schema + " key=" + key + " officeId=" + officeId);
+
         return officeId;
     }
 
@@ -98,8 +96,7 @@ public class AppUserService {
         final String schema = getSchema();
 
         String officeIdStr = resolverOfficeId(userKey);
-        logger.debug("UserKey recibido: {}", userKey);
-        logger.debug("OfficeId resuelto: {}", officeIdStr);
+
 
         if (officeIdStr == null || officeIdStr.isBlank()) {
             throw new EmptyResultDataAccessException("No office_id found for userKey:" + userKey, 1);
@@ -290,11 +287,21 @@ public class AppUserService {
             WHERE id = ?
         """.formatted(schema);
 
-        int filas = jdbcTemplate.update(sql,
-                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(data.getOfficeId()) : data.getOfficeId(),
-                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(data.getStaffId()) : data.getStaffId(),
-                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(data.getUserId()) : data.getUserId()
-        );
+        Object officeId = null;
+        Object staffId = null;
+        Object userId;
+
+        if (schema.contains(SCHEMAPOSTGRES)) {
+            officeId = (data.getOfficeId() != null) ? Long.parseLong(data.getOfficeId()) : null;
+            staffId = (data.getStaffId() != null) ? Long.parseLong(data.getStaffId()) : null;
+            userId = (data.getUserId() != null) ? Long.parseLong(data.getUserId()) : null;
+        } else {
+            officeId = data.getOfficeId();
+            staffId = data.getStaffId();
+            userId = data.getUserId();
+        }
+
+        int filas = jdbcTemplate.update(sql, officeId, staffId, userId);
         if (filas == 0) {
             throw new EmptyResultDataAccessException("User with id not found: " + data.getUserId(), 1);
         }
