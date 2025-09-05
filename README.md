@@ -2,10 +2,10 @@
 
 ## For Users
 
-1. Download the Mifos® Security Plugin and extract the files (all the libraries required for running it are included). **It is very important to use the specific versions according to the Apache Fineract**
+1. Download the Mifos® Security Plugin and extract the files (all the libraries required for running it are included). **It is very important to use the specific version according to the Apache Fineract**
 
 | Apache Fineract | Mifos Reporting Plugin | Download Link |
-| :---         |     :---:      |          ---: |
+| :---:         |     :---:      |          :---: |
 | 1.12.0   | 1.12.1     | [Mifos® Security Plugin v1.12.1](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosSecurityPlugin/MifosSecurityPlugin-1.12.1.zip/download)     |
 | 1.11.0     | 1.11.0       | [Mifos® Security Plugin v1.11.0](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosReportingPlugin/FineractPentahoPlugin-1.11.zip/download)      |
 
