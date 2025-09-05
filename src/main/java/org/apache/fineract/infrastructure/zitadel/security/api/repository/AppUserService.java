@@ -10,11 +10,13 @@ import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityEx
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.infrastructure.zitadel.security.api.dto.AppUserRequest;
 import org.apache.fineract.infrastructure.zitadel.security.api.dto.OfficeUpdateRequest;
 import org.apache.fineract.infrastructure.zitadel.security.api.dto.RoleGrantRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,53 +31,50 @@ public class AppUserService {
     private final DatabasePasswordEncryptor databasePasswordEncryptor;
     private final Environment environment;
     private final PlatformSecurityContext context;
-
+    private String SCHEMAPOSTGRES = "public";
 
     public AppUserService(
             final PlatformSecurityContext context,
             final @Qualifier("dataSource") DataSource tenantDataSource,
             final DatabasePasswordEncryptor databasePasswordEncryptor,
             final Environment environment
-    ) {
+        ) {
         this.context = context;
         this.databasePasswordEncryptor = databasePasswordEncryptor;
         this.environment = environment;
         this.jdbcTemplate = new JdbcTemplate(tenantDataSource);
     }
 
-
-
     private String getSchema() {
         var tenant = ThreadLocalContextUtil.getTenant();
         if (tenant == null || tenant.getConnection() == null) {
             throw new IllegalStateException("Tenant not set (ThreadLocalContextUtil.getTenant() is null).");
         }
-        return tenant.getConnection().getSchemaName();
+        String dbProductName;
+        try (var conn = jdbcTemplate.getDataSource().getConnection()) {
+            dbProductName = conn.getMetaData().getDatabaseProductName().toLowerCase();
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo obtener el tipo de base de datos", e);
+        }
+        return dbProductName.contains("postgresql") ? SCHEMAPOSTGRES : tenant.getConnection().getSchemaName();
     }
-
-    private String toProtocol() { return "jdbc:mariadb"; }
-
-    private String toJdbcUrl(String protocol, String host, int port, String schema, String params) {
-        String base = String.format("%s://%s:%d/%s", protocol, host, port, schema);
-        return (params != null && !params.isBlank()) ? base + "?" + params : base;
-    }
-
 
     public String resolverOfficeId(String userKey) {
         final String schema = getSchema();
         final String key = (userKey == null) ? null : userKey.trim();
         logger.debug("[resolverOfficeId] schema={}, userKey='{}'", schema, key);
+
         if (key == null || key.isEmpty()) {
             logger.warn("[resolverOfficeId] empty userKey");
             return null;
         }
 
         String sql = """
-        SELECT u.office_id
-        FROM %s.m_appuser u
-        WHERE u.id = ? OR u.username_zitadel = ?
-        LIMIT 1
-    """.formatted(schema);
+                SELECT u.office_id
+                FROM %s.m_appuser u
+                WHERE u.id = ? OR u.username_zitadel = ?
+                LIMIT 1
+            """.formatted(schema);
 
         Long asLong = null;
         try { asLong = Long.valueOf(key); } catch (NumberFormatException ignore) {}
@@ -95,11 +94,8 @@ public class AppUserService {
         return officeId;
     }
 
-
-
     public Map<String, Object> getUserDataById(String userKey) {
         final String schema = getSchema();
-
 
         String officeIdStr = resolverOfficeId(userKey);
         logger.debug("UserKey recibido: {}", userKey);
@@ -134,14 +130,9 @@ public class AppUserService {
           AND o.id = ?
     """.formatted(schema, schema, schema, schema, whereUser);
 
-        logger.debug("SQL (pass #1):\n{}", sql);
-        logger.debug("Bind (pass #1): user={}, officeId={}", userKey, officeId);
-
         List<Map<String, Object>> filas = isNumeric
                 ? jdbcTemplate.queryForList(sql, userIdLong, officeId)
                 : jdbcTemplate.queryForList(sql, userKey.trim(), officeId);
-
-        logger.debug("Filas encontradas (pass #1): {}", filas.size());
 
         if (filas.isEmpty() && isNumeric) {
             String sql2 = """
@@ -155,14 +146,8 @@ public class AppUserService {
               AND o.id = ?
         """.formatted(schema, schema, schema, schema);
 
-            logger.debug("SQL (pass #2 fallback by username_zitadel):\n{}", sql2);
-            logger.debug("Bind (pass #2): username_zitadel={}, officeId={}", userKey, officeId);
-
             filas = jdbcTemplate.queryForList(sql2, userKey.trim(), officeId);
-            logger.debug("Filas encontradas (pass #2): {}", filas.size());
         }
-
-        logger.debug("=== Resultado crudo de la consulta ===");
         filas.forEach(System.out::println);
 
         if (filas.isEmpty()) {
@@ -179,51 +164,41 @@ public class AppUserService {
                 ))
                 .toList();
         resultado.put("roles", roles);
-
-        logger.debug("=== Resultado final ===");
-        logger.debug(resultado.toString());
-        logger.debug("Resultado final: {}", resultado);
-
         return resultado;
     }
 
-
-
-
-    public void insertAppUserWithRoles(
-            String id,
-            String officeId,
-            String staffId,
-            String usernameZitadel,
-            String firstname,
-            String lastname,
-            List<String> roleIds
-    ) {
-        getSchema();
-
+    public void insertAppUserWithRoles(AppUserRequest request) {
+        List<String> roleIds = request.getRoleIds();
         String schema = getSchema();
 
-        String normalizedStaffId = (staffId != null && !staffId.isBlank()) ? staffId : null;
-        
-        String insertUserSql = """
-            INSERT INTO %s.m_appuser
-            (id, office_id, staff_id, username, username_zitadel, firstname, lastname, password, email,
-             firsttime_login_remaining, nonexpired, nonlocked, nonexpired_credentials, enabled)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 1, 1)
-        """.formatted(schema);
+        String insertUserSql =
+        schema.contains(SCHEMAPOSTGRES) ?
+                """
+                    INSERT INTO %s.m_appuser
+                    (id, office_id, staff_id, username, username_zitadel, firstname, lastname, password, email,
+                    firsttime_login_remaining, nonexpired, nonlocked, nonexpired_credentials, enabled)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, true, true, true, true, true)
+                """.formatted(schema)
+                :
+                """
+                    INSERT INTO %s.m_appuser
+                    (id, office_id, staff_id, username, username_zitadel, firstname, lastname, password, email,
+                    firsttime_login_remaining, nonexpired, nonlocked, nonexpired_credentials, enabled)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 1, 1)
+                """.formatted(schema);
 
         jdbcTemplate.update(
-            insertUserSql,
-            id,
-            officeId,
-            (staffId == null || staffId.isBlank()) ? null : staffId,
-            id,
-            usernameZitadel,
-            firstname,
-            lastname,
-            "",
-            ""
-    );
+                insertUserSql,
+                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(request.getId()) : request.getId(),
+                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(request.getOfficeId()) : request.getOfficeId(),
+                (request.getStaffId() == null || request.getStaffId().isBlank()) ? null : request.getStaffId(),
+                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(request.getId()) : request.getId(),
+                request.getUsername(),
+                request.getFirstname(),
+                request.getLastname(),
+                "",
+                ""
+        );
 
         String insertRoleSql = """
             INSERT INTO %s.m_appuser_role (appuser_id, role_id)
@@ -232,24 +207,32 @@ public class AppUserService {
 
         if (roleIds != null) {
             for (String roleId : roleIds) {
-                jdbcTemplate.update(insertRoleSql, id, roleId);
+                jdbcTemplate.update(insertRoleSql,
+                        schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(request.getId()) : request.getId(),
+                        schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(roleId) : roleId
+                    );
             }
         }
 
-        logger.info("User {} inserted with roles {}", id, roleIds);
+        logger.info("User {} inserted with roles {}", request.getId(), roleIds);
     }
 
     public void updateUserData(String id, String usernameZitadel, String firstname, String lastname) {
         String schema = getSchema();
         String sql = """
-            UPDATE %s.m_appuser
-            SET username_zitadel = ?,
-                firstname = ?,
-                lastname = ?
-            WHERE id = ?
-        """.formatted(schema);
+                UPDATE %s.m_appuser
+                SET username_zitadel = ?,
+                    firstname = ?,
+                    lastname = ?
+                WHERE id = ?
+            """.formatted(schema);
 
-        int filas = jdbcTemplate.update(sql, usernameZitadel, firstname, lastname, id);
+        int filas = jdbcTemplate.update(sql,
+                usernameZitadel,
+                firstname,
+                lastname,
+                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(id) : id
+        );
         if (filas == 0) {
             throw new RuntimeException("No user found with the provided ID: " + id);
         }
@@ -262,13 +245,13 @@ public class AppUserService {
             DELETE FROM %s.m_appuser_role
             WHERE appuser_id = ?
         """.formatted(schema);
-        jdbcTemplate.update(deleteRolesSql, id);
+        jdbcTemplate.update(deleteRolesSql, schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(id) : id);
 
         String deleteUserSql = """
             DELETE FROM %s.m_appuser
             WHERE id = ?
         """.formatted(schema);
-        int filas = jdbcTemplate.update(deleteUserSql, id);
+        int filas = jdbcTemplate.update(deleteUserSql, schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(id) : id);
         if (filas == 0) {
             throw new EmptyResultDataAccessException("No user found with the ID:" + id, 1);
         }
@@ -283,7 +266,7 @@ public class AppUserService {
             DELETE FROM %s.m_appuser_role
             WHERE appuser_id = ?
         """.formatted(schema);
-        jdbcTemplate.update(deleteSql, userId);
+        jdbcTemplate.update(deleteSql, schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(userId) : userId);
 
         if (nuevosRoles != null && !nuevosRoles.isEmpty()) {
             String insertSql = """
@@ -291,7 +274,10 @@ public class AppUserService {
                 VALUES (?, ?)
             """.formatted(schema);
             for (String roleId : nuevosRoles) {
-                jdbcTemplate.update(insertSql, userId, roleId);
+                jdbcTemplate.update(insertSql,
+                        schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(userId) : userId,
+                        schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(roleId) : roleId
+                );
             }
         }
     }
@@ -304,7 +290,11 @@ public class AppUserService {
             WHERE id = ?
         """.formatted(schema);
 
-        int filas = jdbcTemplate.update(sql, data.getOfficeId(), data.getStaffId(), data.getUserId());
+        int filas = jdbcTemplate.update(sql,
+                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(data.getOfficeId()) : data.getOfficeId(),
+                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(data.getStaffId()) : data.getStaffId(),
+                schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(data.getUserId()) : data.getUserId()
+        );
         if (filas == 0) {
             throw new EmptyResultDataAccessException("User with id not found: " + data.getUserId(), 1);
         }
@@ -315,7 +305,7 @@ public class AppUserService {
         String sql = """
             SELECT COUNT(*) FROM %s.m_appuser WHERE id = ?
         """.formatted(schema);
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(id) : id);
         return count != null && count > 0;
     }
 

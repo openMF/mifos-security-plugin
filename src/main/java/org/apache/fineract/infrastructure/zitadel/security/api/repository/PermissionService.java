@@ -6,11 +6,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PermissionService {
 
     private final JdbcTemplate jdbcTemplate;
+    private String SCHEMAPOSTGRES = "public";
 
     public PermissionService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -21,7 +23,13 @@ public class PermissionService {
         if (tenant == null || tenant.getConnection() == null) {
             throw new IllegalStateException("Tenant not set (ThreadLocalContextUtil.getTenant() is null).");
         }
-        return tenant.getConnection().getSchemaName();
+        String dbProductName;
+        try (var conn = jdbcTemplate.getDataSource().getConnection()) {
+            dbProductName = conn.getMetaData().getDatabaseProductName().toLowerCase();
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo obtener el tipo de base de datos", e);
+        }
+        return dbProductName.contains("postgresql") ? SCHEMAPOSTGRES : tenant.getConnection().getSchemaName();
     }
 
     public List<RoleDTO> getRoles(List<String> roleIds) {
@@ -32,6 +40,10 @@ public class PermissionService {
         final String schema = getSchema();
         String inSql = String.join(",", Collections.nCopies(roleIds.size(), "?"));
 
+        List<Object> params = roleIds.stream()
+                .map(roleId -> schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(roleId) : roleId)
+                .collect(Collectors.toList());
+
         String sql = """
             SELECT *
             FROM %s.m_role mr
@@ -40,7 +52,7 @@ public class PermissionService {
 
         return jdbcTemplate.query(
                 sql,
-                roleIds.toArray(),
+                params.toArray(),
                 (rs, rowNum) -> {
                     RoleDTO role = new RoleDTO();
                     role.setId(rs.getLong("id"));
@@ -59,6 +71,10 @@ public class PermissionService {
         final String schema = getSchema();
         String inSql = String.join(",", Collections.nCopies(roleIds.size(), "?"));
 
+        List<Object> params = roleIds.stream()
+                .map(roleId -> schema.contains(SCHEMAPOSTGRES) ? Long.parseLong(roleId) : roleId)
+                .collect(Collectors.toList());
+
         String sql = """
             SELECT p.code
             FROM %s.m_role_permission rp
@@ -68,7 +84,7 @@ public class PermissionService {
 
         return jdbcTemplate.query(
                 sql,
-                roleIds.toArray(),
+                params.toArray(),
                 (rs, rowNum) -> rs.getString("code")
         );
     }

@@ -759,25 +759,14 @@ public class ApiServiceImp implements ApiService{
                     throw new IllegalStateException("Authentication is not of type JwtAuthenticationToken.");
                 }
             }
-            appUserService.insertAppUserWithRoles(
-                    request.getId(),
-                    request.getOfficeId(),
-                    request.getStaffId(),
-                    request.getUsername(),
-                    request.getFirstname(),
-                    request.getLastname(),
-                    request.getRoleIds()
-            );
 
+            appUserService.insertAppUserWithRoles( request );
             return ResponseEntity.ok(new ApiResponse<>(200, "Successfully created user", null));
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(new ApiResponse<>(500, "Error creating user: " + e.getMessage(), null));
         }
     }
-
-
-
 
     @Override
     public ResponseEntity<ApiResponse<Object>> getdataExtraUser(String userId) {
@@ -1091,18 +1080,8 @@ public class ApiServiceImp implements ApiService{
 
             request.setRoleIds(Arrays.asList("1"));
 
-            appUserService.insertAppUserWithRoles(
-                    request.getId(),
-                    request.getOfficeId(),
-                    request.getStaffId(),
-                    request.getUsername(),
-                    request.getFirstname(),
-                    request.getLastname(),
-                    request.getRoleIds()
-            );
-
+            appUserService.insertAppUserWithRoles(request);
             return "create user";
-
         } catch (Exception e) {
             e.printStackTrace();
             return "error: " + e.getMessage();
