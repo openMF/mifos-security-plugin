@@ -2,7 +2,7 @@
 
 ## For Users
 
-1. Download the Mifos® Security Plugin and extract the files (all the libraries required for running it are included)
+1. Download the Mifos® Security Plugin and extract the files (all the libraries required for running it are included). **It is very important to use the specific versions according to the Apache Fineract**
 
 | Apache Fineract | Mifos Reporting Plugin | Download Link |
 | :---         |     :---:      |          ---: |
