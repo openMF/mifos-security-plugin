@@ -2,7 +2,12 @@
 
 ## For Users
 
-1. [Download link for Mifos® Security Plugin ](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosSecurityPlugin/MifosSecurityPlugin-1.12.0.zip/download)  and extract the files (java jar files are on it)
+1. Download the Mifos® Security Plugin and extract the files (all the libraries required for running it are included)
+
+| Apache Fineract | Mifos Reporting Plugin | Download Link |
+| :---         |     :---:      |          ---: |
+| 1.12.0   | 1.12.1     | [Mifos® Security Plugin v1.12.1](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosSecurityPlugin/MifosSecurityPlugin-1.12.1.zip/download)     |
+| 1.11.0     | 1.11.0       | [Mifos® Security Plugin v1.11.0](https://sourceforge.net/projects/mifos/files/mifos-plugins/MifosReportingPlugin/FineractPentahoPlugin-1.11.zip/download)      |
 
 2. Option 1 - Execute only for Docker® - Create a directory, copy the Mifos® Security Plugin libraries in it
 
