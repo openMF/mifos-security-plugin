@@ -19,7 +19,7 @@
         <fineract.version>0.0.1252-78531d5</fineract.version>
         <graal.version>24.2.2</graal.version>
         <eclipselink.version>4.0.7</eclipselink.version>
-        <truth.version>1.4.4</truth.version>
+        <truth.version>1.4.5</truth.version>
         <org.json.version>20250517</org.json.version>
         <ok.http.version>2.6.14</ok.http.version>
     </properties>
